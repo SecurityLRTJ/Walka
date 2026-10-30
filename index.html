@@ -19,6 +19,10 @@
     <!-- Chart.js (Untuk Grafik Batang) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- Leaflet JS (Untuk Maps) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -272,13 +276,9 @@
             border: 1px solid rgba(255, 255, 255, 0.22);
         }
 
-        /* Tema Menu Bar Utama (Sidebar) Senada Login Merah dengan Shadow Blur */
+        /* Tema Menu Bar Utama (Sidebar) Presisi Edge-to-Edge */
         .menubar-login-theme {
-            background: linear-gradient(155deg, rgba(225, 29, 72, 0.95) 0%, rgba(159, 18, 57, 0.94) 48%, rgba(15, 23, 42, 0.98) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 10px 0 40px -4px rgba(225, 29, 72, 0.55), 0 0 28px rgba(159, 18, 57, 0.45);
-            border-right: 1px solid rgba(255, 255, 255, 0.22);
+            background: linear-gradient(180deg, #4c0519 0%, #0f172a 100%);
         }
 
         /* Animasi Kilau Running ke Kiri untuk Tombol */
@@ -312,10 +312,21 @@
         #sidebar.collapsed .flyout-box { left: 100% !important; margin-left: 0.5rem !important; }
         #btnToggleSidebarPc { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         #sidebar.collapsed #btnToggleSidebarPc { transform: rotate(180deg); }
+        
+        /* Marker Foto Maps */
+        .pulse-marker {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
     </style>
 </head>
-<!-- Perbaikan 1: Menambahkan h-screen w-screen overflow-hidden agar body mentok ke ukuran layar -->
-<body class="bg-black text-slate-800 antialiased selection:bg-rose-600 selection:text-white h-screen w-screen overflow-hidden">
+<!-- Perbaikan 1: Menambahkan h-[100dvh] w-screen overflow-hidden agar body mentok ke ukuran layar dinamis HP -->
+<body class="bg-black text-slate-800 antialiased selection:bg-rose-600 selection:text-white h-[100dvh] w-screen overflow-hidden">
 
     <!-- ==================== TOAST NOTIFICATION ==================== -->
     <div id="toastContainer" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
@@ -482,8 +493,8 @@
     </button>
 
     <!-- ==================== MAIN APPLICATION DASHBOARD ==================== -->
-    <!-- Perbaikan 2: appScreen dibuat h-screen (tinggi sesuai layar penuh) dan overflow-hidden -->
-    <div id="appScreen" class="hidden h-screen w-full flex bg-gradient-to-b from-[#4c0519] via-[#0f172a] to-black overflow-hidden">
+    <!-- Perbaikan 2: appScreen dibuat h-[100dvh] agar menyesuaikan ukuran viewport navigasi HP (URL bar) -->
+    <div id="appScreen" class="hidden h-[100dvh] w-full flex bg-gradient-to-b from-[#4c0519] via-[#0f172a] to-black overflow-hidden">
         
         <!-- Mobile Sidebar Backdrop -->
         <div id="sidebarBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden lg:hidden"></div>
@@ -641,6 +652,18 @@
                 </span>
             </button>
 
+            <!-- MENU MAPS -->
+            <button type="button" onclick="navigateView('maps')" id="nav-maps" class="nav-item w-full flex items-center justify-between px-4 py-3.5 text-white/95 hover:bg-white/15 hover:text-white font-semibold transition group border-t border-white/5">
+                <span class="nav-item-content flex items-center gap-3.5">
+                    <svg class="w-5 h-5 text-rose-100 group-hover:text-white transition-transform group-hover:scale-110 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon>
+                        <line x1="9" y1="3" x2="9" y2="18"></line>
+                        <line x1="15" y1="6" x2="15" y2="21"></line>
+                    </svg>
+                    <span class="text-xs tracking-wide hide-on-collapse">Maps Peta</span>
+                </span>
+            </button>
+
             <!-- MENU PERSONIL (DIUBAH MENJADI FLYOUT SEPERTI WALKA) -->
             <div class="relative overflow-visible" id="menuPersonilWrapper">
                 <button type="button" onclick="toggleFlyoutMenu('submenuPersonil', event)" id="btnMenuPersonil" class="nav-item w-full flex items-center justify-between px-4 py-3.5 text-white/95 hover:bg-white/15 hover:text-white font-semibold transition group last:rounded-b-xl">
@@ -678,7 +701,7 @@
             </nav> <!-- Memutus nav disini, sehingga tidak terpengaruh menu-menu lain di atasnya -->
 
             <!-- BAGIAN PALING BAWAH: GARIS PEMBATAS & LOGOUT (Terkunci di batas layar bawah) -->
-            <div class="px-4 pb-6 pt-4 mt-auto border-t border-white/15 shrink-0 w-full transition-all">
+            <div class="px-4 pb-6 pt-4 mt-auto shrink-0 w-full transition-all">
                 <button type="button" onclick="handleLogout()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition border border-white/15 shadow-sm">
                     <i class="fa-solid fa-right-from-bracket text-rose-200 shrink-0"></i>
                     <span class="hide-on-collapse">Logout</span>
@@ -690,9 +713,8 @@
         <!-- Perbaikan 4: Tambahkan h-full overflow-hidden di container ini agar yang di-scroll murni dari tag <main> nya saja -->
         <div class="flex-1 flex flex-col min-w-0 relative h-full overflow-hidden">
             
-            <!-- Topbar (Tambahkan ID mainHeader dan transition-transform agar bisa bergeser saat toggle immersive) -->
-            <!-- Perbaikan 5: Hapus 'sticky top-0' karena sudah didalam urutan flex flex-col, tambahkan shrink-0 -->
-            <header id="mainHeader" class="bg-[#4c0519]/80 backdrop-blur-xl border-b border-white/10 z-30 px-4 sm:px-6 py-3.5 flex shrink-0 items-center justify-between shadow-[0_15px_40px_-10px_rgba(225,29,72,0.4)] transition-transform duration-300">
+            <!-- Topbar Layout Presisi (Tanpa Shadow dan Margin) -->
+            <header id="mainHeader" class="bg-[#4c0519] z-30 px-4 sm:px-6 py-3.5 flex shrink-0 items-center justify-between transition-transform duration-300">
                 <div class="flex items-center gap-3">
                     <!-- Mobile Header Logo (Tampil saat di HP menggantikan Hamburger Menu Lama) -->
                     <h2 class="lg:hidden text-lg font-extrabold text-white tracking-wider flex items-center gap-2 drop-shadow-sm">
@@ -715,7 +737,7 @@
 
             <!-- Dynamic Views Container -->
             <!-- flex-1 dan overflow-y-auto memastikan section form/tabel ini saja yang bisa meluncur -->
-            <main class="p-4 sm:p-6 flex-1 overflow-y-auto space-y-6 pb-36 lg:pb-6 relative z-10 custom-scrollbar">
+            <main class="p-4 sm:p-6 flex-1 overflow-y-auto space-y-6 relative z-10 custom-scrollbar">
 
                 <!-- ===================================================================== -->
                 <!-- VIEW 1A: SUBMENU BUAT LAPORAN -> CEKLIS PATROLI                       -->
@@ -1439,12 +1461,76 @@
                     </div>
                 </section>
 
+                <!-- ===================================================================== -->
+                <!-- VIEW 6: MAPS (PETA LOKASI)                                            -->
+                <!-- ===================================================================== -->
+                <section id="view-maps" class="view-section hidden absolute inset-0 z-20 bg-slate-50">
+                    <!-- Peta Full Screen -->
+                    <div id="mapContainer" class="w-full h-full z-10"></div>
+                    
+                    <!-- Floating Search Bar melayang di atas Peta (Kanan Atas) -->
+                    <div class="absolute top-4 right-4 sm:top-6 sm:right-6 z-[1000] flex justify-end items-center pointer-events-none">
+                        <div id="searchContainer" class="pointer-events-auto bg-white/95 backdrop-blur-xl rounded-full shadow-lg border border-slate-200 flex items-center overflow-hidden transition-all duration-300 w-11 h-11 hover:shadow-xl hover:border-rose-300">
+                            <input type="text" id="mapSearchInput" onkeypress="handleMapSearch(event)" placeholder="Cari alamat / lokasi..." class="w-0 opacity-0 transition-all duration-300 bg-transparent outline-none text-xs text-slate-700 font-bold px-0 h-full border-none focus:ring-0 placeholder:text-slate-400">
+                            <button type="button" onclick="toggleMapSearch()" id="btnMapSearch" class="w-11 h-11 flex items-center justify-center text-slate-600 hover:text-rose-600 transition-colors shrink-0 bg-transparent border-none outline-none">
+                                <i class="fa-solid fa-magnifying-glass text-base"></i>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
             </main>
+
+            <!-- ==================== MACBOOK STYLE MOBILE FOOTBAR (DOCK) DENGAN TRANSISI HIDE/SHOW ==================== -->
+            <div id="mobileFootbarContainer" class="hidden w-full shrink-0 z-[900] lg:hidden">
+                <div id="mobileDock" class="pointer-events-auto bg-slate-900 px-2 pt-2 flex items-end justify-between w-full" style="touch-action: none; padding-bottom: calc(0.625rem + env(safe-area-inset-bottom));">
+                    
+                    <!-- Walka (Menu Operasional) -->
+                    <button id="dock-menu-walka" class="dock-btn flex-1 flex flex-col items-center gap-1.5 focus:outline-none" onclick="openBottomSheet('sheetWalka')">
+                        <div class="dock-icon w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center transition-all duration-200 origin-bottom shadow-lg">
+                            <i class="fa-solid fa-layer-group text-2xl"></i>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 transition-colors">Walka</span>
+                    </button>
+                    
+                    <!-- Kalender -->
+                    <button id="dock-menu-kalender" class="dock-btn flex-1 flex flex-col items-center gap-1.5 focus:outline-none" onclick="navigateView('menu-kalender')">
+                        <div class="dock-icon w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center transition-all duration-200 origin-bottom shadow-lg">
+                            <i class="fa-regular fa-calendar-check text-2xl"></i>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 transition-colors">Kalender</span>
+                    </button>
+                    
+                    <!-- Maps -->
+                    <button id="dock-menu-maps" class="dock-btn flex-1 flex flex-col items-center gap-1.5 focus:outline-none" onclick="navigateView('maps')">
+                        <div class="dock-icon w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center transition-all duration-200 origin-bottom shadow-lg">
+                            <i class="fa-solid fa-map-location-dot text-2xl"></i>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 transition-colors">Maps</span>
+                    </button>
+
+                    <!-- Personil (Menggantikan Petugas) -->
+                    <button id="dock-menu-personil" class="dock-btn flex-1 flex flex-col items-center gap-1.5 focus:outline-none" onclick="openBottomSheet('sheetPersonil')">
+                        <div class="dock-icon w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center transition-all duration-200 origin-bottom shadow-lg">
+                            <i class="fa-solid fa-users text-2xl"></i>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 transition-colors">Personil</span>
+                    </button>
+
+                    <!-- Akun / Profil -->
+                    <button id="dock-menu-akun" class="dock-btn flex-1 flex flex-col items-center gap-1.5 focus:outline-none" onclick="openBottomSheet('sheetAccount')">
+                        <div class="dock-icon w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center transition-all duration-200 origin-bottom shadow-lg overflow-hidden p-0.5">
+                            <img id="dockProfileImg" src="https://placehold.co/100x100/9f1239/ffffff?text=WK" class="w-full h-full rounded-[14px] object-cover border-2 border-slate-700">
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 transition-colors">Akun</span>
+                    </button>
+
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- HAPUS MODAL TAMBAH PETUGAS YANG LAMA (Karena sudah jadi view form sendiri) -->
-    
     <!-- ==================== MODAL EDIT PROFIL PRIBADI ==================== -->
     <div id="modalEditProfile" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-[2000] hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border border-slate-200">
@@ -1616,45 +1702,6 @@
         </div>
     </div>
 
-    <!-- ==================== MACBOOK STYLE MOBILE FOOTBAR (DOCK) DENGAN TRANSISI HIDE/SHOW ==================== -->
-    <div id="mobileFootbarContainer" class="hidden fixed bottom-0 left-0 right-0 z-[900] flex justify-center lg:hidden pointer-events-none transition-all duration-300 transform">
-        <div id="mobileDock" class="pointer-events-auto bg-slate-900/95 backdrop-blur-xl border-t border-white/20 p-2.5 rounded-t-3xl shadow-2xl flex items-end justify-between gap-1 w-full" style="touch-action: none; padding-bottom: calc(0.625rem + env(safe-area-inset-bottom));">
-            
-            <!-- Walka (Menu Operasional) -->
-            <button id="dock-menu-walka" class="dock-btn flex-1 flex flex-col items-center gap-1.5 focus:outline-none" onclick="openBottomSheet('sheetWalka')">
-                <div class="dock-icon w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center transition-all duration-200 origin-bottom shadow-lg">
-                    <i class="fa-solid fa-layer-group text-2xl"></i>
-                </div>
-                <span class="text-[10px] font-bold text-slate-400 transition-colors">Walka</span>
-            </button>
-            
-            <!-- Kalender -->
-            <button id="dock-menu-kalender" class="dock-btn flex-1 flex flex-col items-center gap-1.5 focus:outline-none" onclick="navigateView('menu-kalender')">
-                <div class="dock-icon w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center transition-all duration-200 origin-bottom shadow-lg">
-                    <i class="fa-regular fa-calendar-check text-2xl"></i>
-                </div>
-                <span class="text-[10px] font-bold text-slate-400 transition-colors">Kalender</span>
-            </button>
-            
-            <!-- Personil (Menggantikan Petugas) -->
-            <button id="dock-menu-personil" class="dock-btn flex-1 flex flex-col items-center gap-1.5 focus:outline-none" onclick="openBottomSheet('sheetPersonil')">
-                <div class="dock-icon w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center transition-all duration-200 origin-bottom shadow-lg">
-                    <i class="fa-solid fa-users text-2xl"></i>
-                </div>
-                <span class="text-[10px] font-bold text-slate-400 transition-colors">Personil</span>
-            </button>
-
-            <!-- Akun / Profil -->
-            <button id="dock-menu-akun" class="dock-btn flex-1 flex flex-col items-center gap-1.5 focus:outline-none" onclick="openBottomSheet('sheetAccount')">
-                <div class="dock-icon w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center transition-all duration-200 origin-bottom shadow-lg overflow-hidden p-0.5">
-                    <img id="dockProfileImg" src="https://placehold.co/100x100/9f1239/ffffff?text=WK" class="w-full h-full rounded-[14px] object-cover border-2 border-slate-700">
-                </div>
-                <span class="text-[10px] font-bold text-slate-400 transition-colors">Akun</span>
-            </button>
-
-        </div>
-    </div>
-
     <!-- ==================== BOTTOM SHEETS (MOBILE MENUS) ==================== -->
     <div id="sheetBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[2100] hidden opacity-0 transition-opacity duration-300" onclick="closeAllSheets()"></div>
 
@@ -1816,7 +1863,6 @@
             </div>
         </div>
     </div>
-
 
     <!-- ==================== JAVASCRIPT LOGIC ==================== -->
     <script>
@@ -2164,9 +2210,9 @@
             const icon = document.getElementById('iconToggleNavFoot');
             
             if (navFootHidden) {
-                // Sembunyikan (Translate Y)
-                header.classList.add('-translate-y-full');
-                footbar.classList.add('translate-y-[150%]', 'opacity-0');
+                // Sembunyikan Header dan Footbar
+                header.classList.add('hidden');
+                footbar.classList.add('hidden');
                 
                 // Ubah Icon ke Compress
                 icon.classList.remove('fa-expand');
@@ -2174,8 +2220,8 @@
                 showToast('Mode Layar Penuh (Immersive) Aktif', 'info');
             } else {
                 // Tampilkan kembali
-                header.classList.remove('-translate-y-full');
-                footbar.classList.remove('translate-y-[150%]', 'opacity-0');
+                header.classList.remove('hidden');
+                footbar.classList.remove('hidden');
                 
                 // Ubah Icon ke Expand
                 icon.classList.remove('fa-compress');
@@ -2284,6 +2330,7 @@
             let dockBtnId = '';
             if(viewKey.startsWith('form-patroli') || viewKey.startsWith('form-kejadian') || viewKey.startsWith('form-pnp') || viewKey.startsWith('data-patroli') || viewKey.startsWith('data-kejadian') || viewKey.startsWith('data-pnp')) dockBtnId = 'dock-menu-walka';
             else if(viewKey === 'menu-kalender') dockBtnId = 'dock-menu-kalender';
+            else if(viewKey === 'maps') dockBtnId = 'dock-menu-maps';
             else if(viewKey === 'data-anggota' || viewKey === 'form-tambah-petugas') dockBtnId = 'dock-menu-personil';
 
             if(dockBtnId) {
@@ -2302,6 +2349,14 @@
 
             closeAllFlyouts();
             closeAllSheets();
+
+            // Init Map hanya jika view maps dibuka untuk menghindari glitch ukuran render Peta
+            if (viewKey === 'maps') {
+                setTimeout(() => {
+                    initMap();
+                    if (mapInstance) mapInstance.invalidateSize();
+                }, 300);
+            }
 
             if (window.innerWidth < 1024) {
                 const sb = document.getElementById('sidebar');
@@ -2380,13 +2435,202 @@
                 reader.readAsDataURL(input.files[0]);
             }
         }
+        
+        // ---------------- MAPS LOGIC ----------------
+        let mapInstance = null;
+        let userGpsMarker = null;
+        let watchPositionId = null;
+        let searchMarker = null; // Tambahkan untuk menyimpan marker hasil pencarian
+        let isSearchExpanded = false; // Status Search Bar
+
+        function initMap() {
+            if (mapInstance) return; // Mencegah inisialisasi ulang ganda
+            
+            // Set view awal ke area LRT Jakarta (sekitar Kelapa Gading - Velodrome)
+            mapInstance = L.map('mapContainer').setView([-6.1685, 106.9002], 13);
+            
+            const token = 'AIzaSyCmgH8T5ozB4shDUnsGIWmCqxcm2h94ok8'; // API Key Google Maps dipatenkan
+            const tileUrl = `https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&key=${token}`;
+            const attrib = '© Google Maps';
+            const subdomains = ['0', '1', '2', '3'];
+
+            // Default Tile menggunakan Google Maps
+            L.tileLayer(tileUrl, {
+                maxZoom: 19,
+                subdomains: subdomains,
+                attribution: attrib
+            }).addTo(mapInstance);
+
+            // Data Marker Stasiun LRT
+            const stations = [
+                { name: 'Stasiun Pegangsaan Dua', lat: -6.1643, lng: 106.9142 },
+                { name: 'Stasiun Boulevard Utara', lat: -6.1610, lng: 106.9060 },
+                { name: 'Stasiun Boulevard Selatan', lat: -6.1685, lng: 106.9002 },
+                { name: 'Stasiun Pulomas', lat: -6.1755, lng: 106.8920 },
+                { name: 'Stasiun Equestrian', lat: -6.1820, lng: 106.8860 },
+                { name: 'Stasiun Velodrome', lat: -6.1895, lng: 106.8815 }
+            ];
+
+            // Custom Icon Titik LRT Merah
+            const lrtIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:#e11d48; width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.5);'></div>",
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+            });
+
+            stations.forEach(s => {
+                L.marker([s.lat, s.lng], { icon: lrtIcon }).addTo(mapInstance)
+                    .bindPopup(`<div class="text-xs font-bold text-slate-800">${s.name}</div><div class="text-[10px] font-semibold text-rose-600 mt-1">LRT Jakarta</div>`);
+            });
+
+            // Mulai melacak GPS
+            startGpsTracking();
+        }
+
+        function startGpsTracking() {
+            if ("geolocation" in navigator) {
+                // Langsung ambil posisi pertama kali agar presisi dan map otomatis terpusat
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        updateUserMarker(position);
+                        mapInstance.setView([position.coords.latitude, position.coords.longitude], 17);
+                        showToast('Navigasi Lokasi GPS Anda Berhasil Ditemukan.', 'success');
+                    },
+                    (error) => {
+                        console.warn("Gagal awal GPS:", error.message);
+                        showToast('Akses GPS mati atau ditolak. Lokasi gagal dimuat.', 'error');
+                        // Tidak ada lompatan ke fallback location, biarkan peta diam di lokasi default/terakhir
+                    },
+                    { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+                );
+
+                watchPositionId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        updateUserMarker(position);
+                    },
+                    (error) => {
+                        console.warn("Gagal mendapatkan lokasi GPS:", error.message);
+                        showToast('Sinyal GPS hilang. Titik berhenti di lokasi terakhir.', 'error');
+                        // Titik akan diam di tempat terakhirnya (last known location)
+                    },
+                    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+                );
+            } else {
+                showToast('Perangkat tidak mendukung fitur GPS.', 'error');
+            }
+        }
+
+        function updateUserMarker(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            if (!userGpsMarker) {
+                // Buat marker dengan foto user
+                const userImgUrl = currentUser && currentUser.photo 
+                                   ? extractImageUrl(currentUser.photo) 
+                                   : 'https://placehold.co/100/10b981/ffffff?text=ME';
+                
+                const photoIcon = L.divIcon({
+                    className: 'user-gps-icon pulse-marker',
+                    html: `<div style="width: 44px; height: 44px; border-radius: 50%; border: 3px solid #10b981; overflow: hidden; background-color: white; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"><img src="${userImgUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://placehold.co/100/10b981/ffffff?text=ME'"></div>`,
+                    iconSize: [44, 44],
+                    iconAnchor: [22, 22]
+                });
+
+                userGpsMarker = L.marker([lat, lng], { icon: photoIcon, zIndexOffset: 1000 }).addTo(mapInstance);
+                userGpsMarker.bindPopup(`<div class="text-xs font-bold text-slate-800 text-center">Lokasi Anda Saat Ini</div><div class="text-[10px] font-bold text-emerald-600 text-center mt-1">${currentUser ? currentUser.name : 'Guest'}</div>`);
+            } else {
+                // Update posisi jika bergeser
+                userGpsMarker.setLatLng([lat, lng]);
+            }
+        }
+
+        // --- Logika Pencarian Lokasi Peta (Search Bar) ---
+        function toggleMapSearch() {
+            const container = document.getElementById('searchContainer');
+            const input = document.getElementById('mapSearchInput');
+            
+            if (!isSearchExpanded) {
+                // Buka Search Bar memanjang ke kiri
+                container.classList.remove('w-11');
+                container.classList.add('w-[240px]', 'sm:w-[280px]');
+                input.classList.remove('w-0', 'opacity-0', 'px-0');
+                input.classList.add('w-full', 'opacity-100', 'pl-4');
+                input.focus();
+                isSearchExpanded = true;
+            } else {
+                // Jika input ada isinya saat tombol di klik, lakukan pencarian
+                if (input.value.trim() !== '') {
+                    executeMapSearch(input.value.trim());
+                } else {
+                    // Tutup Search Bar
+                    container.classList.remove('w-[240px]', 'sm:w-[280px]');
+                    container.classList.add('w-11');
+                    input.classList.remove('w-full', 'opacity-100', 'pl-4');
+                    input.classList.add('w-0', 'opacity-0', 'px-0');
+                    isSearchExpanded = false;
+                }
+            }
+        }
+
+        function handleMapSearch(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                executeMapSearch(e.target.value.trim());
+            }
+        }
+
+        async function executeMapSearch(query) {
+            if (!query) return;
+            const btnIcon = document.querySelector('#btnMapSearch i');
+            btnIcon.classList.remove('fa-magnifying-glass');
+            btnIcon.classList.add('fa-circle-notch', 'fa-spin');
+            
+            // API Key Google Maps
+            const token = 'AIzaSyCmgH8T5ozB4shDUnsGIWmCqxcm2h94ok8';
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${token}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.status === 'OK' && data.results.length > 0) {
+                    const location = data.results[0].geometry.location;
+                    const formattedAddress = data.results[0].formatted_address;
+                    
+                    // Terbang ke lokasi
+                    mapInstance.flyTo([location.lat, location.lng], 17, { duration: 1.5 });
+                    
+                    // Hapus marker pencarian sebelumnya jika ada
+                    if (searchMarker) mapInstance.removeLayer(searchMarker);
+                    
+                    // Tambahkan marker titik hasil pencarian
+                    searchMarker = L.marker([location.lat, location.lng]).addTo(mapInstance);
+                    searchMarker.bindPopup(`<div class="text-xs font-bold text-slate-900 mb-1">Hasil Pencarian</div><div class="text-[10px] text-slate-600 font-medium leading-tight">${formattedAddress}</div>`).openPopup();
+                    
+                    // Tutup bar pencarian jika di HP agar tidak menutupi layar setelah selesai
+                    if (window.innerWidth < 640) {
+                        toggleMapSearch(); 
+                    }
+                } else {
+                    showToast('Lokasi tidak ditemukan.', 'error');
+                }
+            } catch (error) {
+                console.error("Search error:", error);
+                showToast('Gagal terhubung ke server pencarian.', 'error');
+            } finally {
+                btnIcon.classList.remove('fa-circle-notch', 'fa-spin');
+                btnIcon.classList.add('fa-magnifying-glass');
+            }
+        }
 
         // ---------------- FORM SUBMISSIONS & DATA RENDER ----------------
         let chartPatroliInstance = null;
         let chartKejadianInstance = null;
         let chartPnpInstance = null;
 
-        function submitPatroli(e) {
+        async function submitPatroli(e) {
             e.preventDefault();
             const item = {
                 hariTgl: document.getElementById('patHariTgl').value,
@@ -2407,13 +2651,17 @@
                 fotoPatroli: document.getElementById('prevFotoPatroli').value,
                 keterangan: document.getElementById('patKeterangan').value
             };
+            showToast('Menyimpan data patroli ke server...', 'info');
+            const res = await callBackend('savePatroli', item);
+            if (res && res.data) Object.assign(item, res.data);
+            
             dataPatroliList.unshift(item);
             renderAllTables();
-            showToast('Ceklis Patroli berhasil disimpan ke Data Patroli!', 'success');
+            showToast('Ceklis Patroli berhasil disimpan ke Database!', 'success');
             navigateView('data-patroli');
         }
 
-        function submitKejadian(e) {
+        async function submitKejadian(e) {
             e.preventDefault();
             const item = {
                 hariTgl: document.getElementById('kejHariTgl').value,
@@ -2427,13 +2675,17 @@
                 fotoTindakan: document.getElementById('prevFotoTindakan').value,
                 waktuTindakan: document.getElementById('kejWaktuTindakan').value
             };
+            showToast('Menyimpan laporan kejadian ke server...', 'info');
+            const res = await callBackend('saveKejadian', item);
+            if (res && res.data) Object.assign(item, res.data);
+            
             dataKejadianList.unshift(item);
             renderAllTables();
-            showToast('Laporan Kejadian berhasil disimpan ke Data Kejadian!', 'success');
+            showToast('Laporan Kejadian berhasil disimpan ke Database!', 'success');
             navigateView('data-kejadian');
         }
 
-        function submitPnp(e) {
+        async function submitPnp(e) {
             e.preventDefault();
             const item = {
                 hariTgl: document.getElementById('pnpHariTgl').value,
@@ -2445,9 +2697,13 @@
                 keterangan: document.getElementById('pnpKeterangan').value,
                 fotoPnp: document.getElementById('prevFotoPnp').value
             };
+            showToast('Menyimpan laporan PNP ke server...', 'info');
+            const res = await callBackend('savePnp', item);
+            if (res && res.data) Object.assign(item, res.data);
+            
             dataPnpList.unshift(item);
             renderAllTables();
-            showToast('Laporan Jumlah PNP berhasil disimpan!', 'success');
+            showToast('Laporan Jumlah PNP berhasil disimpan ke Database!', 'success');
             navigateView('data-pnp');
         }
 
@@ -2512,7 +2768,7 @@
             }, 300); 
         }
 
-        function submitPetugas(e) {
+        async function submitPetugas(e) {
             e.preventDefault();
             const item = {
                 regu: document.getElementById('petRegu').value,
@@ -2529,6 +2785,10 @@
                 email: document.getElementById('petEmail').value,
                 password: document.getElementById('petPassword').value
             };
+            showToast('Menyimpan personel ke database...', 'info');
+            const res = await callBackend('savePetugas', item);
+            if (res && res.data) Object.assign(item, res.data);
+            
             dataPetugasList.push(item);
             renderAllTables();
             document.getElementById('formPetugas').reset();
@@ -2536,13 +2796,21 @@
             navigateView('data-anggota');
         }
 
-        function deleteItem(type, idx) {
-            if (type === 'patroli') dataPatroliList.splice(idx, 1);
-            if (type === 'kejadian') dataKejadianList.splice(idx, 1);
-            if (type === 'pnp') dataPnpList.splice(idx, 1);
-            if (type === 'petugas') dataPetugasList.splice(idx, 1);
+        async function deleteItem(type, idx) {
+            let targetList = type === 'patroli' ? dataPatroliList :
+                             type === 'kejadian' ? dataKejadianList :
+                             type === 'pnp' ? dataPnpList : dataPetugasList;
+            const item = targetList[idx];
+            const identifier = item ? (item.id || item.noId || item.nama) : '';
+            
+            targetList.splice(idx, 1);
             renderAllTables();
-            showToast('Data berhasil dihapus.', 'info');
+            showToast('Data berhasil dihapus dari tampilan lokal.', 'info');
+            
+            if (identifier) {
+                await callBackend('deleteItem', { type: type, id: identifier });
+                showToast('Data berhasil dihapus dari Database.', 'success');
+            }
         }
 
         // --- Logika Edit Profil Pribadi (User Experience) ---
@@ -2621,11 +2889,12 @@
             modal.classList.remove('flex');
         }
 
-        function submitEditProfile(e) {
+        async function submitEditProfile(e) {
             e.preventDefault();
             // Ambil target user dari dataset yang tadi disimpan saat buka modal
             const targetName = document.getElementById('formEditProfile').dataset.editTargetName || currentUser.name;
             const userIndex = dataPetugasList.findIndex(u => u.nama === targetName);
+            const oldName = targetName;
             
             if (userIndex !== -1) {
                 dataPetugasList[userIndex].nama = document.getElementById('editNama').value;
@@ -2673,6 +2942,9 @@
                     const mobileName = document.getElementById('mobileUserName');
                     if (mobileName) mobileName.textContent = currentUser.name;
                 }
+
+                showToast('Menyimpan perubahan ke server...', 'info');
+                await callBackend('updateProfile', Object.assign({ oldName: oldName }, dataPetugasList[userIndex]));
 
                 renderAllTables();
                 closeEditProfile();
@@ -3118,9 +3390,10 @@
             showToast(`Siklus shift ${person} berhasil diperbarui!`, 'success');
         }
 
-        function saveSchedule() {
+        async function saveSchedule() {
             const person = document.getElementById('calendarPersonSelect').value;
-            showToast(`Jadwal shift bulan ini untuk ${person} berhasil ditetapkan!`, 'success');
+            await callBackend('saveSchedule', { person: person, schedule: scheduleData[person] });
+            showToast(`Jadwal shift bulan ini untuk ${person} berhasil ditetapkan ke Database!`, 'success');
         }
 
         // ---------------- TOAST & CLOCK HELPERS ----------------
@@ -3347,113 +3620,8 @@
             
             if (icon) icon.classList.remove('animate-spin');
         }
-
-        const _origSubmitPatroli = submitPatroli;
-        submitPatroli = async function(e) {
-            e.preventDefault();
-            const item = {
-                hariTgl: document.getElementById('patHariTgl').value,
-                jam: document.getElementById('patJam').value,
-                noLrv: document.getElementById('patNoLrv').value,
-                namaAsp: document.getElementById('patNamaAsp').value,
-                namaWalka: document.getElementById('patNamaWalka').value,
-                kodeHt: document.getElementById('patKodeHt').value,
-                suhuA: document.getElementById('patSuhuA').value,
-                suhuB: document.getElementById('patSuhuB').value,
-                announcer: document.getElementById('patAnnouncer').value,
-                pid: document.getElementById('patPid').value,
-                drm: document.getElementById('patDrm').value,
-                tangga: document.getElementById('patTangga').value,
-                boxEmergency: document.getElementById('patBoxEmergency').value,
-                apar: document.getElementById('patApar').value,
-                interkom: document.getElementById('patInterkom').value,
-                fotoPatroli: document.getElementById('prevFotoPatroli').value,
-                keterangan: document.getElementById('patKeterangan').value
-            };
-            showToast('Menyimpan data patroli ke server...', 'info');
-            const res = await callBackend('savePatroli', item);
-            if (res && res.data) Object.assign(item, res.data);
-            dataPatroliList.unshift(item);
-            renderAllTables();
-            showToast('Ceklis Patroli berhasil disimpan ke Database!', 'success');
-            navigateView('data-patroli');
-        };
-
-        const _origSubmitKejadian = submitKejadian;
-        submitKejadian = async function(e) {
-            e.preventDefault();
-            const item = {
-                hariTgl: document.getElementById('kejHariTgl').value,
-                lokasi: document.getElementById('kejLokasi').value,
-                waktu: document.getElementById('kejWaktu').value,
-                petugas: document.getElementById('kejPetugas').value,
-                kronologi: document.getElementById('kejKronologi').value,
-                fotoKejadian: document.getElementById('prevFotoKejadian').value,
-                tindakan: document.getElementById('kejTindakan').value,
-                kerugian: document.getElementById('kejKerugian').value,
-                fotoTindakan: document.getElementById('prevFotoTindakan').value,
-                waktuTindakan: document.getElementById('kejWaktuTindakan').value
-            };
-            showToast('Menyimpan laporan kejadian ke server...', 'info');
-            const res = await callBackend('saveKejadian', item);
-            if (res && res.data) Object.assign(item, res.data);
-            dataKejadianList.unshift(item);
-            renderAllTables();
-            showToast('Laporan Kejadian berhasil disimpan ke Database!', 'success');
-            navigateView('data-kejadian');
-        };
-
-        const _origSubmitPnp = submitPnp;
-        submitPnp = async function(e) {
-            e.preventDefault();
-            const item = {
-                hariTgl: document.getElementById('pnpHariTgl').value,
-                jam: document.getElementById('pnpJam').value,
-                noLrv: document.getElementById('pnpNoLrv').value,
-                namaAsp: document.getElementById('pnpNamaAsp').value,
-                namaWalka: document.getElementById('pnpNamaWalka').value,
-                jumlah: document.getElementById('pnpJumlah').value,
-                keterangan: document.getElementById('pnpKeterangan').value,
-                fotoPnp: document.getElementById('prevFotoPnp').value
-            };
-            showToast('Menyimpan laporan PNP ke server...', 'info');
-            const res = await callBackend('savePnp', item);
-            if (res && res.data) Object.assign(item, res.data);
-            dataPnpList.unshift(item);
-            renderAllTables();
-            showToast('Laporan Jumlah PNP berhasil disimpan!', 'success');
-            navigateView('data-pnp');
-        };
-
-        const _origSubmitPetugas = submitPetugas;
-        submitPetugas = async function(e) {
-            e.preventDefault();
-            const item = {
-                regu: document.getElementById('petRegu').value,
-                foto: document.getElementById('prevFotoPetugas').value,
-                nama: document.getElementById('petNama').value,
-                noId: document.getElementById('petNoId').value,
-                jabatan: document.getElementById('petJabatan').value,
-                jobdesk: document.getElementById('petJobdesk').value,
-                alamat: document.getElementById('petAlamat').value,
-                noHp: document.getElementById('petNoHp').value,
-                noKta: document.getElementById('petNoKta').value,
-                noIjazah: document.getElementById('petNoIjazah').value,
-                email: document.getElementById('petEmail').value,
-                password: document.getElementById('petPassword').value
-            };
-            showToast('Menyimpan personel ke database...', 'info');
-            const res = await callBackend('savePetugas', item);
-            if (res && res.data) Object.assign(item, res.data);
-            dataPetugasList.push(item);
-            renderAllTables();
-            document.getElementById('formPetugas').reset();
-            showToast(`Petugas ${item.nama} berhasil ditambahkan ke ${item.regu}!`, 'success');
-            navigateView('data-anggota');
-        };
-
-        const _origHandleRegister = handleRegister;
-        handleRegister = async function(e) {
+        
+        async function handleRegister(e) {
             e.preventDefault();
             const name = document.getElementById('regName').value.trim();
             const id = document.getElementById('regId').value.trim();
@@ -3481,46 +3649,18 @@
                 email: email,
                 password: pass
             };
-            await callBackend('savePetugas', newOfficer);
-            _origHandleRegister(e);
-        };
-
-        const _origSubmitEditProfile = submitEditProfile;
-        submitEditProfile = async function(e) {
-            e.preventDefault();
-            const oldName = currentUser.name;
-            _origSubmitEditProfile(e);
             
-            const targetName = document.getElementById('formEditProfile').dataset.editTargetName || currentUser.name;
-            const updatedUser = dataPetugasList.find(u => u.nama === targetName);
-            if (updatedUser) {
-                await callBackend('updateProfile', Object.assign({ oldName: oldName }, updatedUser));
-            }
-        };
-
-        const _origDeleteItem = deleteItem;
-        deleteItem = async function(type, idx) {
-            let targetList = type === 'patroli' ? dataPatroliList :
-                             type === 'kejadian' ? dataKejadianList :
-                             type === 'pnp' ? dataPnpList : dataPetugasList;
-            const item = targetList[idx];
-            const identifier = item ? (item.id || item.noId || item.nama) : '';
+            showToast('Membuat akun dan menyimpan ke database...', 'info');
+            const res = await callBackend('savePetugas', newOfficer);
+            if (res && res.data) Object.assign(newOfficer, res.data);
             
-            targetList.splice(idx, 1);
+            dataPetugasList.push(newOfficer);
             renderAllTables();
-            showToast('Data berhasil dihapus.', 'info');
             
-            if (identifier) {
-                await callBackend('deleteItem', { type: type, id: identifier });
-            }
-        };
-
-        const _origSaveSchedule = saveSchedule;
-        saveSchedule = async function() {
-            const person = document.getElementById('calendarPersonSelect').value;
-            await callBackend('saveSchedule', { person: person, schedule: scheduleData[person] });
-            showToast(`Jadwal shift bulan ini untuk ${person} berhasil ditetapkan ke Database!`, 'success');
-        };
+            document.getElementById('registerForm').reset();
+            toggleAuthSlide(false);
+            showToast(`Pendaftaran akun ${name} berhasil! Silakan Login.`, 'success');
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             syncWithSpreadsheet();
