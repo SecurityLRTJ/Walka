@@ -303,7 +303,8 @@
         }
     </style>
 </head>
-<body class="bg-black text-slate-800 antialiased selection:bg-rose-600 selection:text-white">
+<!-- Perbaikan 1: Menambahkan h-screen w-screen overflow-hidden agar body mentok ke ukuran layar -->
+<body class="bg-black text-slate-800 antialiased selection:bg-rose-600 selection:text-white h-screen w-screen overflow-hidden">
 
     <!-- ==================== TOAST NOTIFICATION ==================== -->
     <div id="toastContainer" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
@@ -401,7 +402,7 @@
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Email</label>
                         <div class="relative">
                             <i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
-                            <input type="email" id="loginUsername" required value="dimas.aditya@lrtjakarta.co.id" placeholder="Masukan Email" class="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-200 outline-none">
+                            <input type="email" id="loginUsername" required placeholder="Masukan Email" class="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-200 outline-none">
                         </div>
                     </div>
 
@@ -409,7 +410,7 @@
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
                         <div class="relative">
                             <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
-                            <input type="password" id="loginPassword" required value="walkalrtj123" placeholder="Isi Password" class="w-full pl-10 pr-10 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-200 outline-none">
+                            <input type="password" id="loginPassword" required placeholder="Isi Password" class="w-full pl-10 pr-10 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 focus:ring-2 focus:ring-rose-200 outline-none">
                             <button type="button" onclick="togglePasswordVisibility('loginPassword', 'eyeIconLogin')" class="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors">
                                 <i id="eyeIconLogin" class="fa-solid fa-eye text-sm"></i>
                             </button>
@@ -470,16 +471,18 @@
     </button>
 
     <!-- ==================== MAIN APPLICATION DASHBOARD ==================== -->
-    <div id="appScreen" class="hidden min-h-screen flex bg-gradient-to-b from-[#4c0519] via-[#0f172a] to-black">
+    <!-- Perbaikan 2: appScreen dibuat h-screen (tinggi sesuai layar penuh) dan overflow-hidden -->
+    <div id="appScreen" class="hidden h-screen w-full flex bg-gradient-to-b from-[#4c0519] via-[#0f172a] to-black overflow-hidden">
         
         <!-- Mobile Sidebar Backdrop -->
         <div id="sidebarBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden lg:hidden"></div>
 
         <!-- INTERACTIVE SIDEBAR (WARNA MERAH LOGIN + SHADOW BLUR) -->
-        <aside id="sidebar" class="hidden lg:flex flex-col w-72 shrink-0 menubar-login-theme text-white overflow-visible relative z-50">
+        <!-- Perbaikan 3: Menambah h-full ke sidebar agar tingginya pas kontainer utamanya -->
+        <aside id="sidebar" class="hidden lg:flex flex-col h-full w-72 shrink-0 menubar-login-theme text-white overflow-visible relative z-50">
             
             <!-- Profile Header (Dipindahkan ke Paling Atas) -->
-            <div class="relative p-6 border-b border-white/15 flex flex-col items-center justify-center text-center mt-2">
+            <div class="relative p-6 border-b border-white/15 flex flex-col items-center justify-center text-center mt-2 shrink-0">
                 <!-- Tombol Close Mobile -->
                 <button onclick="toggleMobileSidebar()" class="absolute top-2 right-4 lg:hidden text-rose-100 hover:text-white p-1 z-20">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -504,10 +507,10 @@
 
             <!-- Navigation Menu List & Profile Section (Overflow Visible for Side Flyouts) -->
             <nav class="flex-1 px-3 py-5 flex flex-col overflow-visible">
-                <div class="px-3 pb-2.5 text-[10px] font-bold uppercase tracking-widest text-rose-100/80">Menu Operasional</div>
+                <div class="px-3 pb-2.5 text-[10px] font-bold uppercase tracking-widest text-rose-100/80 shrink-0">Menu Operasional</div>
 
                 <!-- Kotak Menu Utama dengan Tema Merah Shadow Blur & Garis Pemisah -->
-                <div class="rounded-xl submenu-login-theme divide-y divide-white/15 overflow-visible">
+                <div class="rounded-xl submenu-login-theme divide-y divide-white/15 overflow-visible shrink-0">
 
                     <!-- MENU WALKA (FLYOUT KE SAMPING) -->
                     <div class="relative overflow-visible" id="menuWalkaWrapper">
@@ -580,70 +583,91 @@
                                 </button>
 
                                 <!-- LEVEL 2 FLYOUT: ITEM CEK DATA (KOTAK PENDEK & ICON DATABASE) -->
-                                <div id="subCekData" class="flyout-box submenu-login-theme hidden absolute left-20 sm:left-full top-0 sm:ml-2.5 w-44 rounded-xl z-[110] divide-y divide-white/15 overflow-hidden">
-                                    <button type="button" onclick="navigateView('data-patroli')" id="nav-data-patroli" class="nav-item w-full text-left px-4 py-3 text-xs flex items-center justify-between text-white/90 hover:bg-white/20 hover:text-white transition">
-                                        <span class="flex items-center gap-3">
-                                            <i class="fa-solid fa-database text-rose-100 text-sm"></i>
-                                            <span>Data Patroli</span>
-                                        </span>
-                                        <span id="badgeCountPatroli" class="px-1.5 py-0.5 bg-black/30 border border-white/20 text-white rounded text-[10px] font-mono">3</span>
-                                    </button>
-                                    <button type="button" onclick="navigateView('data-kejadian')" id="nav-data-kejadian" class="nav-item w-full text-left px-4 py-3 text-xs flex items-center justify-between text-white/90 hover:bg-white/20 hover:text-white transition">
-                                        <span class="flex items-center gap-3">
-                                            <i class="fa-solid fa-database text-rose-100 text-sm"></i>
-                                            <span>Data Kejadian</span>
-                                        </span>
-                                        <span id="badgeCountKejadian" class="px-1.5 py-0.5 bg-black/30 border border-white/20 text-white rounded text-[10px] font-mono">2</span>
-                                    </button>
-                                    <button type="button" onclick="navigateView('data-pnp')" id="nav-data-pnp" class="nav-item w-full text-left px-4 py-3 text-xs flex items-center justify-between text-white/90 hover:bg-white/20 hover:text-white transition">
-                                        <span class="flex items-center gap-3">
-                                            <i class="fa-solid fa-database text-rose-100 text-sm"></i>
-                                            <span>Data PNP</span>
-                                        </span>
-                                        <span id="badgeCountPnp" class="px-1.5 py-0.5 bg-black/30 border border-white/20 text-white rounded text-[10px] font-mono">3</span>
-                                    </button>
-                                </div>
-                            </div>
+                        <div id="subCekData" class="flyout-box submenu-login-theme hidden absolute left-20 sm:left-full top-0 sm:ml-2.5 w-44 rounded-xl z-[110] divide-y divide-white/15 overflow-hidden">
+                            <button type="button" onclick="navigateView('data-patroli')" id="nav-data-patroli" class="nav-item w-full text-left px-4 py-3 text-xs flex items-center justify-between text-white/90 hover:bg-white/20 hover:text-white transition">
+                                <span class="flex items-center gap-3">
+                                    <i class="fa-solid fa-database text-rose-100 text-sm"></i>
+                                    <span>Data Patroli</span>
+                                </span>
+                                <span id="badgeCountPatroli" class="px-1.5 py-0.5 bg-black/30 border border-white/20 text-white rounded text-[10px] font-mono">3</span>
+                            </button>
+                            <button type="button" onclick="navigateView('data-kejadian')" id="nav-data-kejadian" class="nav-item w-full text-left px-4 py-3 text-xs flex items-center justify-between text-white/90 hover:bg-white/20 hover:text-white transition">
+                                <span class="flex items-center gap-3">
+                                    <i class="fa-solid fa-database text-rose-100 text-sm"></i>
+                                    <span>Data Kejadian</span>
+                                </span>
+                                <span id="badgeCountKejadian" class="px-1.5 py-0.5 bg-black/30 border border-white/20 text-white rounded text-[10px] font-mono">2</span>
+                            </button>
+                            <button type="button" onclick="navigateView('data-pnp')" id="nav-data-pnp" class="nav-item w-full text-left px-4 py-3 text-xs flex items-center justify-between text-white/90 hover:bg-white/20 hover:text-white transition">
+                                <span class="flex items-center gap-3">
+                                    <i class="fa-solid fa-database text-rose-100 text-sm"></i>
+                                    <span>Data PNP</span>
+                                </span>
+                                <span id="badgeCountPnp" class="px-1.5 py-0.5 bg-black/30 border border-white/20 text-white rounded text-[10px] font-mono">3</span>
+                            </button>
                         </div>
                     </div>
-
-                    <!-- MENU KALENDER -->
-                    <button type="button" onclick="navigateView('menu-kalender')" id="nav-menu-kalender" class="nav-item w-full flex items-center justify-between px-4 py-3.5 text-white/95 hover:bg-white/15 hover:text-white font-semibold transition group">
-                        <span class="flex items-center gap-3.5">
-                            <svg class="w-5 h-5 text-rose-100 group-hover:text-white transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                <line x1="16" y1="2" x2="16" y2="6"/>
-                                <line x1="8" y1="2" x2="8" y2="6"/>
-                                <line x1="3" y1="10" x2="21" y2="10"/>
-                                <path d="M8 14h.01"/>
-                                <path d="M12 14h.01"/>
-                                <path d="M16 14h.01"/>
-                                <path d="M8 18h.01"/>
-                                <path d="M12 18h.01"/>
-                            </svg>
-                            <span class="text-xs tracking-wide">Kalender</span>
-                        </span>
-                    </button>
-
-                    <!-- MENU PETUGAS -->
-                    <button type="button" onclick="navigateView('menu-petugas')" id="nav-menu-petugas" class="nav-item w-full flex items-center justify-between px-4 py-3.5 text-white/95 hover:bg-white/15 hover:text-white font-semibold transition group last:rounded-b-xl">
-                        <span class="flex items-center gap-3.5">
-                            <svg class="w-5 h-5 text-rose-100 group-hover:text-white transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                                <circle cx="9" cy="7" r="4"/>
-                                <polyline points="16 11 18 13 22 9"/>
-                            </svg>
-                            <span class="text-xs tracking-wide">Petugas</span>
-                        </span>
-                    </button>
-
                 </div>
+            </div>
 
-                <!-- Spacer untuk mendorong tombol Logout ke bawah -->
+            <!-- MENU KALENDER -->
+            <button type="button" onclick="navigateView('menu-kalender')" id="nav-menu-kalender" class="nav-item w-full flex items-center justify-between px-4 py-3.5 text-white/95 hover:bg-white/15 hover:text-white font-semibold transition group">
+                <span class="flex items-center gap-3.5">
+                    <svg class="w-5 h-5 text-rose-100 group-hover:text-white transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                        <path d="M8 14h.01"/>
+                        <path d="M12 14h.01"/>
+                        <path d="M16 14h.01"/>
+                        <path d="M8 18h.01"/>
+                        <path d="M12 18h.01"/>
+                    </svg>
+                    <span class="text-xs tracking-wide">Kalender</span>
+                </span>
+            </button>
+
+            <!-- MENU PERSONIL (DIUBAH MENJADI FLYOUT SEPERTI WALKA) -->
+            <div class="relative overflow-visible" id="menuPersonilWrapper">
+                <button type="button" onclick="toggleFlyoutMenu('submenuPersonil', event)" id="btnMenuPersonil" class="nav-item w-full flex items-center justify-between px-4 py-3.5 text-white/95 hover:bg-white/15 hover:text-white font-semibold transition group last:rounded-b-xl">
+                    <span class="flex items-center gap-3.5">
+                        <svg class="w-5 h-5 text-rose-100 group-hover:text-white transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <polyline points="16 11 18 13 22 9"/>
+                        </svg>
+                        <span class="text-xs tracking-wide">Personil Walka</span>
+                    </span>
+                    <svg id="iconPersonil" class="w-4 h-4 text-rose-100 group-hover:text-white transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m9 18 6-6-6-6"/>
+                    </svg>
+                </button>
+
+                <!-- LEVEL 1 FLYOUT PERSONIL -->
+                <div id="submenuPersonil" class="flyout-box submenu-login-theme hidden absolute left-32 sm:left-full top-0 sm:ml-2.5 w-48 rounded-xl z-[100] divide-y divide-white/15 overflow-hidden">
+                    <button type="button" onclick="navigateView('form-tambah-petugas')" id="nav-form-tambah-petugas" class="nav-item w-full text-left px-4 py-3 text-xs flex items-center justify-between text-white/90 hover:bg-white/20 hover:text-white transition rounded-t-xl group">
+                        <span class="flex items-center gap-3">
+                            <i class="fa-solid fa-user-plus text-rose-200 group-hover:text-white transition-transform"></i>
+                            <span>Tambah Data</span>
+                        </span>
+                    </button>
+                    <button type="button" onclick="navigateView('data-anggota')" id="nav-data-anggota" class="nav-item w-full text-left px-4 py-3 text-xs flex items-center justify-between text-white/90 hover:bg-white/20 hover:text-white transition rounded-b-xl group">
+                        <span class="flex items-center gap-3">
+                            <i class="fa-solid fa-users-rectangle text-rose-200 group-hover:text-white transition-transform"></i>
+                            <span>Data Anggota</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Spacer untuk mendorong tombol Logout ke bawah -->
                 <div class="flex-1"></div>
 
                 <!-- BAGIAN PALING BAWAH: GARIS PEMBATAS & LOGOUT -->
-                <div class="-mx-3 px-3 pt-3 mt-4 border-t border-white/25">
+                <div class="-mx-3 px-3 pt-3 mt-4 border-t border-white/25 shrink-0">
                     <button type="button" onclick="handleLogout()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition border border-white/15 shadow-sm">
                         <i class="fa-solid fa-right-from-bracket text-rose-200"></i>
                         <span>Logout</span>
@@ -653,10 +677,12 @@
         </aside>
 
         <!-- MAIN CONTENT AREA -->
-        <div class="flex-1 flex flex-col min-w-0 relative">
+        <!-- Perbaikan 4: Tambahkan h-full overflow-hidden di container ini agar yang di-scroll murni dari tag <main> nya saja -->
+        <div class="flex-1 flex flex-col min-w-0 relative h-full overflow-hidden">
             
             <!-- Topbar (Tambahkan ID mainHeader dan transition-transform agar bisa bergeser saat toggle immersive) -->
-            <header id="mainHeader" class="bg-[#4c0519]/80 backdrop-blur-xl border-b border-white/10 sticky top-0 z-30 px-4 sm:px-6 py-3.5 flex items-center justify-between shadow-[0_15px_40px_-10px_rgba(225,29,72,0.4)] transition-transform duration-300">
+            <!-- Perbaikan 5: Hapus 'sticky top-0' karena sudah didalam urutan flex flex-col, tambahkan shrink-0 -->
+            <header id="mainHeader" class="bg-[#4c0519]/80 backdrop-blur-xl border-b border-white/10 z-30 px-4 sm:px-6 py-3.5 flex shrink-0 items-center justify-between shadow-[0_15px_40px_-10px_rgba(225,29,72,0.4)] transition-transform duration-300">
                 <div class="flex items-center gap-3">
                     <!-- Mobile Header Logo (Tampil saat di HP menggantikan Hamburger Menu Lama) -->
                     <h2 class="lg:hidden text-lg font-extrabold text-white tracking-wider flex items-center gap-2 drop-shadow-sm">
@@ -672,8 +698,9 @@
                 </div>
             </header>
 
-            <!-- Dynamic Views Container (Tambahkan padding bawah ekstra pb-36 agar tombol form tidak tertutup dock) -->
-            <main class="p-4 sm:p-6 flex-1 overflow-y-auto space-y-6 pb-36 lg:pb-6 relative z-10">
+            <!-- Dynamic Views Container -->
+            <!-- flex-1 dan overflow-y-auto memastikan section form/tabel ini saja yang bisa meluncur -->
+            <main class="p-4 sm:p-6 flex-1 overflow-y-auto space-y-6 pb-36 lg:pb-6 relative z-10 custom-scrollbar">
 
                 <!-- ===================================================================== -->
                 <!-- VIEW 1A: SUBMENU BUAT LAPORAN -> CEKLIS PATROLI                       -->
@@ -1242,28 +1269,137 @@
                 </section>
 
                 <!-- ===================================================================== -->
-                <!-- VIEW 5: MENU PETUGAS (DIRECTORY & FORM)                               -->
+                <!-- VIEW 4: FORM TAMBAH PETUGAS (VIEW BARU)                               -->
                 <!-- ===================================================================== -->
-                <section id="view-menu-petugas" class="view-section hidden space-y-6">
+                <section id="view-form-tambah-petugas" class="view-section hidden space-y-6">
+                    <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-rose-600 shadow-sm">
+                                    <i class="fa-solid fa-user-plus text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-base">Tambah Personil Walka Baru</h3>
+                                    <p class="text-xs text-slate-500">Pendaftaran akun anggota regu atau management</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="formPetugas" onsubmit="submitPetugas(event)" class="p-6 space-y-5">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap</label>
+                                    <input type="text" id="petNama" required placeholder="Andi Wijaya" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">No ID Petugas</label>
+                                    <input type="text" id="petNoId" required placeholder="WK-2026-005" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Regu / Unit</label>
+                                    <div class="relative">
+                                        <select id="petRegu" required class="w-full pl-3.5 pr-10 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none font-semibold bg-white appearance-none">
+                                            <option value="" disabled selected>Pilih Regu</option>
+                                            <option value="Regu 1">Regu 1</option>
+                                            <option value="Regu 2">Regu 2</option>
+                                            <option value="Regu 3">Regu 3</option>
+                                            <option value="Management">Management</option>
+                                        </select>
+                                        <i class="fa-solid fa-chevron-down absolute right-3.5 top-3.5 text-slate-400 text-xs pointer-events-none"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Jabatan</label>
+                                    <div class="relative">
+                                        <select id="petJabatan" required class="w-full pl-3.5 pr-10 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none bg-white appearance-none">
+                                            <option value="Anggota Walka">Anggota Walka</option>
+                                            <option value="Danru">Danru</option>
+                                            <option value="Chief Security">Chief Security</option>
+                                            <option value="Admin">Admin</option>
+                                        </select>
+                                        <i class="fa-solid fa-chevron-down absolute right-3.5 top-3.5 text-slate-400 text-xs pointer-events-none"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Jobdesk Utama</label>
+                                    <input type="text" id="petJobdesk" required placeholder="Pengawalan Kereta LRV" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">No HP / WhatsApp</label>
+                                    <input type="text" id="petNoHp" required placeholder="0812-8899-7766" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">No KTA Satpam/Walka</label>
+                                    <input type="text" id="petNoKta" required placeholder="KTA-PMJ-882910" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">No Ijazah / Gada Pratama</label>
+                                    <input type="text" id="petNoIjazah" required placeholder="IJZ-GP-2024-9912" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Foto Petugas (Opsional)</label>
+                                    <div onclick="openPhotoSource('petugas')" class="w-full flex items-center justify-between px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition h-[42px]">
+                                        <span id="textPreviewPetugas" class="text-slate-600 font-semibold text-xs"><i class="fa-solid fa-image mr-2 text-slate-400"></i>Pilih Foto</span>
+                                        <img id="imgPreviewPetugas" src="" class="hidden w-7 h-7 rounded-full object-cover shadow-sm">
+                                    </div>
+                                    <input type="hidden" id="prevFotoPetugas" value="https://placehold.co/120x120/0f172a/ffffff?text=WALKA">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 border-t border-slate-200 pt-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Email Akun Aktif</label>
+                                    <input type="email" id="petEmail" required placeholder="email@lrtjakarta.co.id" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none font-semibold text-sky-700">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Password Sistem</label>
+                                    <input type="text" id="petPassword" required placeholder="Sandi Default" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none font-semibold text-rose-700">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Domisili</label>
+                                    <textarea id="petAlamat" rows="1" required placeholder="Alamat lengkap..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none"></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end gap-3 pt-2">
+                                <button type="reset" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-100">Batal</button>
+                                <button type="submit" class="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-lg shadow-rose-600/25 flex items-center gap-2">
+                                    <i class="fa-solid fa-user-check"></i> Daftarkan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- ===================================================================== -->
+                <!-- VIEW 5: DATA ANGGOTA (DATA PETUGAS DENGAN GROUPING)                   -->
+                <!-- ===================================================================== -->
+                <section id="view-data-anggota" class="view-section hidden space-y-6">
                     <div class="bg-white rounded-2xl shadow-xs border border-slate-200 p-5">
                         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                            <div>
-                                <h3 class="font-extrabold text-slate-900 text-base">Data Peronil Walka</h3>
+                            <div class="flex items-center gap-3">
+                                <h3 class="font-extrabold text-slate-900 text-base">Data Personil Walka</h3>
+                                <span class="px-2 py-1 bg-rose-100 text-rose-800 text-[10px] font-bold rounded-lg" id="totalPersonilBadge">0 Personil</span>
                             </div>
-                            <!-- Icon Tambah Tanpa Kolom Judul Panjang di Mobile -->
-                            <button id="btnTambahPetugas" onclick="toggleModalPetugas(true)" class="px-3.5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow active:scale-95 transition">
-                                <i class="fa-solid fa-user-plus text-sm"></i> 
-                                <span class="hidden sm:inline">Tambah Data</span>
-                            </button>
+                            <!-- Filter Regu -->
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-slate-500">Filter:</span>
+                                <select id="filterReguSelect" onchange="renderAllTables()" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 outline-none focus:border-rose-500">
+                                    <option value="All">Semua Regu</option>
+                                    <option value="Regu 1">Regu 1</option>
+                                    <option value="Regu 2">Regu 2</option>
+                                    <option value="Regu 3">Regu 3</option>
+                                    <option value="Management">Management</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="overflow-x-auto rounded-xl border border-slate-200">
                             <table class="w-full text-left border-collapse text-xs">
                                 <thead class="bg-slate-200 text-slate-700 uppercase text-[11px]">
                                     <tr>
-                                        <th class="p-3">No</th>
                                         <th class="p-3">Foto</th>
-                                        <th class="p-3">Nama</th>
+                                        <th class="p-3">Nama Lengkap</th>
                                         <th class="p-3">No ID</th>
                                         <th class="p-3">Jabatan</th>
                                         <th class="p-3">Jobdesk</th>
@@ -1271,8 +1407,7 @@
                                         <th class="p-3">No HP</th>
                                         <th class="p-3">No KTA</th>
                                         <th class="p-3">No Ijazah</th>
-                                        <th class="p-3">Email</th>
-                                        <th class="p-3 text-center w-10"></th> <!-- Header tanpa kolom text (Aksi) -->
+                                        <th class="p-3 text-center w-10"><i class="fa-solid fa-gear"></i></th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbodyPetugas" class="divide-y divide-slate-200 bg-white"></tbody>
@@ -1285,78 +1420,9 @@
         </div>
     </div>
 
-    <!-- ==================== MODAL TAMBAH PETUGAS (Z-INDEX 2000 DIPERBAIKI) ==================== -->
-    <div id="modalPetugas" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-[2000] hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border border-slate-200">
-            <div class="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-id-card text-rose-600"></i> Form Tambah Personel Petugas Walka
-                </h3>
-                <button onclick="toggleModalPetugas(false)" class="text-slate-500 hover:text-rose-600 transition-colors">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-            <!-- Padding bawah (pb-24) diperbesar agar tombol tidak tertutup dock mobile -->
-            <form id="formPetugas" onsubmit="submitPetugas(event)" class="p-6 pb-24 space-y-4 max-h-[82vh] overflow-y-auto relative">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap</label>
-                        <input type="text" id="petNama" required placeholder="Andi Wijaya" class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">No ID Petugas</label>
-                        <input type="text" id="petNoId" required placeholder="WK-2026-005" class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Jabatan</label>
-                        <input type="text" id="petJabatan" required placeholder="Contoh: Danru Walka" class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Jobdesk Utama</label>
-                        <input type="text" id="petJobdesk" required placeholder="Pengawalan Kereta LRV & Keamanan Kabin" class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">No HP / WhatsApp</label>
-                        <input type="text" id="petNoHp" required placeholder="0812-8899-7766" class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">No KTA Satpam/Walka</label>
-                        <input type="text" id="petNoKta" required placeholder="KTA-PMJ-882910" class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">No Ijazah / Gada Pratama</label>
-                        <input type="text" id="petNoIjazah" required placeholder="IJZ-GP-2024-9912" class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Email Aktif</label>
-                        <input type="email" id="petEmail" required placeholder="email@lrtjakarta.co.id" class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Password Sistem</label>
-                        <input type="text" id="petPassword" required placeholder="Sandi Default" class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300">
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Foto Petugas (Opsional)</label>
-                        <div onclick="openPhotoSource('petugas')" class="w-full flex items-center justify-between px-3.5 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition">
-                            <span id="textPreviewPetugas" class="text-slate-600 font-semibold text-xs"><i class="fa-solid fa-image mr-2 text-slate-400"></i>Pilih Foto</span>
-                            <img id="imgPreviewPetugas" src="" class="hidden w-6 h-6 rounded-full object-cover shadow-sm">
-                        </div>
-                        <input type="hidden" id="prevFotoPetugas" value="https://placehold.co/120x120/0f172a/ffffff?text=WALKA">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Domisili</label>
-                    <textarea id="petAlamat" rows="2" required placeholder="Jl. Kelapa Gading Boulevard, Jakarta Utara" class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300"></textarea>
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="toggleModalPetugas(false)" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-600">Batal</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">Simpan Petugas</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ==================== MODAL EDIT PROFIL PRIBADI (Z-INDEX 2000 DIPERBAIKI) ==================== -->
+    <!-- HAPUS MODAL TAMBAH PETUGAS YANG LAMA (Karena sudah jadi view form sendiri) -->
+    
+    <!-- ==================== MODAL EDIT PROFIL PRIBADI ==================== -->
     <div id="modalEditProfile" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-[2000] hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border border-slate-200">
             <div class="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
@@ -1367,8 +1433,7 @@
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
-            <!-- Padding bawah (pb-24) diperbesar -->
-            <form id="formEditProfile" onsubmit="submitEditProfile(event)" data-edit-target-name="" class="p-6 pb-24 space-y-4 max-h-[82vh] overflow-y-auto relative">
+            <form id="formEditProfile" onsubmit="submitEditProfile(event)" data-edit-target-name="" class="p-6 pb-24 space-y-4 max-h-[82vh] overflow-y-auto relative custom-scrollbar">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap</label>
@@ -1379,9 +1444,28 @@
                         <input type="text" id="editNoId" required class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50">
                     </div>
                     <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Regu / Unit</label>
+                        <div class="relative">
+                            <select id="editRegu" required class="w-full pl-3.5 pr-8 py-2 text-sm rounded-xl border border-slate-300 appearance-none bg-white">
+                                <option value="Regu 1">Regu 1</option>
+                                <option value="Regu 2">Regu 2</option>
+                                <option value="Regu 3">Regu 3</option>
+                                <option value="Management">Management</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down absolute right-3.5 top-3 text-slate-400 text-xs pointer-events-none"></i>
+                        </div>
+                    </div>
+                    <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Jabatan</label>
-                        <!-- Field ini akan readonly otomatis via JS jika bukan Admin -->
-                        <input type="text" id="editJabatan" required class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300">
+                        <div class="relative">
+                            <select id="editJabatan" required class="w-full pl-3.5 pr-8 py-2 text-sm rounded-xl border border-slate-300 appearance-none bg-white">
+                                <option value="Anggota Walka">Anggota Walka</option>
+                                <option value="Danru">Danru</option>
+                                <option value="Chief Security">Chief Security</option>
+                                <option value="Admin">Admin</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down absolute right-3.5 top-3 text-slate-400 text-xs pointer-events-none" id="editJabatanIcon"></i>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Jobdesk Utama</label>
@@ -1429,7 +1513,6 @@
             </form>
         </div>
     </div>
-
     <!-- ==================== MODAL DETAIL PETUGAS (DENGAN ICON EDIT & Z-INDEX DIPERBAIKI) ==================== -->
     <div id="modalDetailPetugas" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[2000] hidden items-center justify-center p-4 opacity-0 transition-opacity duration-300">
         <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200 transform scale-95 transition-transform duration-300 relative" id="modalDetailContent">
@@ -1458,7 +1541,10 @@
                 </div>
 
                 <p id="detailNoId" class="text-sm font-mono text-rose-600 font-bold mb-1">WK-XXXX</p>
-                <span id="detailJabatan" class="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold mb-5 border border-slate-200">Jabatan</span>
+                <div class="flex justify-center items-center gap-2 mb-5">
+                    <span id="detailRegu" class="inline-block px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">Regu</span>
+                    <span id="detailJabatan" class="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200">Jabatan</span>
+                </div>
                 
                 <!-- Detail Fields -->
                 <div class="text-left space-y-3 bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-inner">
@@ -1517,12 +1603,12 @@
                 <span class="text-[10px] font-bold text-slate-400 transition-colors">Kalender</span>
             </button>
             
-            <!-- Petugas -->
-            <button id="dock-menu-petugas" class="dock-btn flex-1 flex flex-col items-center gap-1.5 focus:outline-none" onclick="navigateView('menu-petugas')">
+            <!-- Personil (Menggantikan Petugas) -->
+            <button id="dock-menu-personil" class="dock-btn flex-1 flex flex-col items-center gap-1.5 focus:outline-none" onclick="openBottomSheet('sheetPersonil')">
                 <div class="dock-icon w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center transition-all duration-200 origin-bottom shadow-lg">
                     <i class="fa-solid fa-users text-2xl"></i>
                 </div>
-                <span class="text-[10px] font-bold text-slate-400 transition-colors">Petugas</span>
+                <span class="text-[10px] font-bold text-slate-400 transition-colors">Personil</span>
             </button>
 
             <!-- Akun / Profil -->
@@ -1561,6 +1647,30 @@
                     <i class="fa-solid fa-database text-3xl drop-shadow-md"></i>
                 </div>
                 <h4 class="text-sm font-extrabold text-white text-center drop-shadow-sm">Database</h4>
+            </button>
+        </div>
+    </div>
+
+    <!-- Sheet: Personil -->
+    <div id="sheetPersonil" class="fixed inset-x-0 bottom-0 z-[2110] bg-gradient-to-b from-slate-800/95 to-slate-900/95 backdrop-blur-xl shadow-[0_-15px_50px_-5px_rgba(15,23,42,0.6)] border-t border-white/10 rounded-t-3xl transform translate-y-full transition-transform duration-300 flex flex-col pb-10 px-6 lg:hidden text-white">
+        <div class="w-full flex justify-center py-4" onclick="closeAllSheets()">
+            <div class="w-14 h-1.5 bg-white/30 rounded-full"></div>
+        </div>
+        <h3 class="font-extrabold mb-6 text-center text-xl drop-shadow-md text-white tracking-wide">Menu Personil</h3>
+        
+        <div class="grid grid-cols-2 gap-5">
+            <button onclick="navFromSheet('form-tambah-petugas')" class="bg-white/5 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-inner flex flex-col items-center hover:bg-white/10 transition active:scale-95 focus:outline-none">
+                <div class="w-16 h-16 rounded-2xl bg-rose-600/20 text-rose-400 flex items-center justify-center mb-3 shadow-md border border-rose-500/30">
+                    <i class="fa-solid fa-user-plus text-3xl drop-shadow-md"></i>
+                </div>
+                <h4 class="text-sm font-extrabold text-white text-center drop-shadow-sm">Tambah Data</h4>
+            </button>
+            
+            <button onclick="navFromSheet('data-anggota')" class="bg-white/5 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-inner flex flex-col items-center hover:bg-white/10 transition active:scale-95 focus:outline-none">
+                <div class="w-16 h-16 rounded-2xl bg-sky-600/20 text-sky-400 flex items-center justify-center mb-3 shadow-md border border-sky-500/30">
+                    <i class="fa-solid fa-users-rectangle text-3xl drop-shadow-md"></i>
+                </div>
+                <h4 class="text-sm font-extrabold text-white text-center drop-shadow-sm">Data Anggota</h4>
             </button>
         </div>
     </div>
@@ -1795,74 +1905,60 @@
         // Data PNP
         let dataPnpList = generateMockData('pnp');
 
-        // Data Petugas
-        let dataPetugasList = [
-            {
-                foto: 'https://placehold.co/120x120/e11d48/ffffff?text=DA',
-                nama: 'Dimas Aditya',
-                noId: 'WK-2026-001',
-                jabatan: 'Danru Walka (Komandan Regu)',
-                jobdesk: 'Koordinasi Pengawalan LRV-01 & Ceklis Keselamatan',
-                alamat: 'Jl. Pegangsaan Dua No. 45, Kelapa Gading, Jakarta Utara',
-                noHp: '0812-9001-2233',
-                noKta: 'KTA-PMJ-2026-8811',
-                noIjazah: 'IJZ-GM-2023-1044',
-                email: 'dimas.aditya@lrtjakarta.co.id',
-                password: 'walkalrtj123'
-            },
-            {
-                foto: 'https://placehold.co/120x120/0284c7/ffffff?text=BS',
-                nama: 'Budi Santoso',
-                noId: 'WK-2026-002',
-                jabatan: 'Anggota Walka LRV',
-                jobdesk: 'Patroli Kabin LRV-02 & Pencatatan PNP',
-                alamat: 'Jl. Kayu Putih Raya No. 18, Pulogadung, Jakarta Timur',
-                noHp: '0813-7788-9900',
-                noKta: 'KTA-PMJ-2026-8812',
-                noIjazah: 'IJZ-GP-2024-2091',
-                email: 'budi.santoso@lrtjakarta.co.id',
-                password: 'walkalrtj123'
-            },
-            {
-                foto: 'https://placehold.co/120x120/d97706/ffffff?text=RR',
-                nama: 'Rizky Ramadhan',
-                noId: 'WK-2026-003',
-                jabatan: 'Anggota Walka LRV',
-                jobdesk: 'Pengawalan On-Train LRV-03 & Tanggap Darurat',
-                alamat: 'Jl. Rawamangun Muka Timur No. 12, Jakarta Timur',
-                noHp: '0857-1122-3344',
-                noKta: 'KTA-PMJ-2026-8815',
-                noIjazah: 'IJZ-GP-2024-2108',
-                email: 'rizky.ramadhan@lrtjakarta.co.id',
-                password: 'walkalrtj123'
-            },
-            {
-                foto: 'https://placehold.co/120x120/059669/ffffff?text=SR',
-                nama: 'Siti Rahmawati',
-                noId: 'WK-2026-004',
-                jabatan: 'Senior Patrol Officer',
-                jobdesk: 'Pengawasan LRV-04 & Layanan Penumpang Prioritas',
-                alamat: 'Jl. Cempaka Putih Tengah No. 9, Jakarta Pusat',
-                noHp: '0811-4455-6677',
-                noKta: 'KTA-PMJ-2026-8819',
-                noIjazah: 'IJZ-GP-2024-2150',
-                email: 'siti.rahmawati@lrtjakarta.co.id',
-                password: 'walkalrtj123'
-            },
-            {
-                foto: 'https://placehold.co/120x120/1e293b/ffffff?text=ADM',
-                nama: 'Admin Sistem',
-                noId: 'WK-2026-999',
-                jabatan: 'Admin',
-                jobdesk: 'Pengelolaan Database & Akses Sistem Penuh',
-                alamat: 'Kantor Pusat LRT Jakarta',
-                noHp: '0811-9999-0000',
-                noKta: 'KTA-ADM-001',
-                noIjazah: 'IJZ-ADM-001',
-                email: 'admin@lrtjakarta.co.id',
-                password: 'admin'
+        // Fungsi Helper untuk generate 23 Data Personil secara utuh
+        function generateDataPersonil() {
+            let list = [];
+            // Management (2 orang)
+            list.push({ regu: 'Management', foto: 'https://placehold.co/120x120/1e293b/ffffff?text=ADM', nama: 'Admin Sistem', noId: 'WK-MGT-01', jabatan: 'Admin', jobdesk: 'Pengelolaan Database & Akses Sistem', alamat: 'Kantor Pusat LRT Jakarta', noHp: '0811-9999-0000', noKta: 'KTA-ADM-001', noIjazah: 'IJZ-ADM-001', email: 'admin@lrtjakarta.co.id', password: 'admin' });
+            list.push({ regu: 'Management', foto: 'https://placehold.co/120x120/1e293b/ffffff?text=CS', nama: 'Chief Security', noId: 'WK-MGT-02', jabatan: 'Chief Security', jobdesk: 'Pengawas Seluruh Operasional Keamanan', alamat: 'Jl. Pegangsaan Dua, Kelapa Gading', noHp: '0811-8888-0000', noKta: 'KTA-CS-001', noIjazah: 'IJZ-GMD-001', email: 'chief@lrtjakarta.co.id', password: 'walkalrtj123' });
+
+            // Regu 1, 2, 3 (Setiap regu 1 Danru, 6 Anggota)
+            const namaDanru = ['Dimas Aditya', 'Septiani', 'Resti', 'Indra'];
+            const awalanAnggota = ['Budi', 'Rizky', 'Siti', 'Andi', 'Fajar', 'Tomi', 'Cahyo', 'Ayu', 'Rini', 'Agus', 'Dwi', 'Eko', 'Fitri', 'Gilang', 'Hadi', 'Ilham', 'Joko', 'Kiki'];
+
+            let aIdx = 0;
+            for(let r = 1; r <= 3; r++) {
+                // Danru
+                list.push({
+                    regu: `Regu ${r}`,
+                    foto: `https://placehold.co/120x120/e11d48/ffffff?text=DR${r}`,
+                    nama: `Danru ${namaDanru[r] || 'Walka'}`,
+                    noId: `WK-R${r}-01`,
+                    jabatan: 'Danru',
+                    jobdesk: `Komandan Regu ${r}`,
+                    alamat: `Jl. Regu ${r} No. 1, Jakarta`,
+                    noHp: `0812-1000-200${r}`,
+                    noKta: `KTA-R${r}-001`,
+                    noIjazah: `IJZ-GM-202${r}-01`,
+                    email: `danru.r${r}@lrtjakarta.co.id`,
+                    password: 'walkalrtj123'
+                });
+                
+                // 6 Anggota
+                for(let a = 1; a <= 6; a++) {
+                    let nAnggota = awalanAnggota[aIdx % awalanAnggota.length];
+                    list.push({
+                        regu: `Regu ${r}`,
+                        foto: `https://placehold.co/120x120/0ea5e9/ffffff?text=${nAnggota.charAt(0)}${nAnggota.charAt(1).toUpperCase()}`,
+                        nama: `${nAnggota} Anggota R${r}`,
+                        noId: `WK-R${r}-0${a+1}`,
+                        jabatan: 'Anggota Walka',
+                        jobdesk: `Pengawalan Kereta Regu ${r}`,
+                        alamat: `Jl. Anggota ${a} Regu ${r}, Jakarta`,
+                        noHp: `0857-3000-40${r}${a}`,
+                        noKta: `KTA-R${r}-00${a+1}`,
+                        noIjazah: `IJZ-GP-2024-${r}${a}`,
+                        email: `anggota${a}.r${r}@lrtjakarta.co.id`,
+                        password: 'walkalrtj123'
+                    });
+                    aIdx++;
+                }
             }
-        ];
+            return list;
+        }
+
+        // Data Petugas
+        let dataPetugasList = generateDataPersonil();
 
         // ---------------- SLIDELAYER LOGIN / REGISTER ----------------
         function toggleAuthSlide(showRegister) {
@@ -1924,7 +2020,11 @@
             const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
             const newPhoto = `https://placehold.co/160x160/e11d48/ffffff?text=${initials}`;
 
+            let defaultRegu = 'Regu 1';
+            if (jabatan === 'Admin' || jabatan === 'Chief Security') defaultRegu = 'Management';
+
             dataPetugasList.push({
+                regu: defaultRegu,
                 foto: newPhoto,
                 nama: name,
                 noId: id,
@@ -2049,7 +2149,10 @@
             closeAllFlyouts();
             if (isHidden) {
                 flyout.classList.remove('hidden');
-                document.getElementById('btnMenuWalka').classList.add('bg-white/20', 'text-white');
+                // Khusus Walka
+                if(menuId === 'submenuWalka') document.getElementById('btnMenuWalka').classList.add('bg-white/20', 'text-white');
+                // Khusus Personil
+                if(menuId === 'submenuPersonil') document.getElementById('btnMenuPersonil').classList.add('bg-white/20', 'text-white');
             }
         }
 
@@ -2066,18 +2169,21 @@
         }
 
         function closeAllFlyouts() {
-            const ids = ['submenuWalka', 'subBuatLaporan', 'subCekData'];
+            const ids = ['submenuWalka', 'subBuatLaporan', 'subCekData', 'submenuPersonil'];
             ids.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.add('hidden');
             });
             const btnWalka = document.getElementById('btnMenuWalka');
             if (btnWalka) btnWalka.classList.remove('bg-white/20');
+            const btnPersonil = document.getElementById('btnMenuPersonil');
+            if (btnPersonil) btnPersonil.classList.remove('bg-white/20');
         }
 
         document.addEventListener('click', function(e) {
-            const wrapper = document.getElementById('menuWalkaWrapper');
-            if (wrapper && !wrapper.contains(e.target)) {
+            const wrapper1 = document.getElementById('menuWalkaWrapper');
+            const wrapper2 = document.getElementById('menuPersonilWrapper');
+            if ((wrapper1 && !wrapper1.contains(e.target)) && (wrapper2 && !wrapper2.contains(e.target))) {
                 closeAllFlyouts();
             }
         });
@@ -2118,9 +2224,9 @@
             });
 
             let dockBtnId = '';
-            if(viewKey.startsWith('form-') || viewKey.startsWith('data-')) dockBtnId = 'dock-menu-walka';
+            if(viewKey.startsWith('form-patroli') || viewKey.startsWith('form-kejadian') || viewKey.startsWith('form-pnp') || viewKey.startsWith('data-patroli') || viewKey.startsWith('data-kejadian') || viewKey.startsWith('data-pnp')) dockBtnId = 'dock-menu-walka';
             else if(viewKey === 'menu-kalender') dockBtnId = 'dock-menu-kalender';
-            else if(viewKey === 'menu-petugas') dockBtnId = 'dock-menu-petugas';
+            else if(viewKey === 'data-anggota' || viewKey === 'form-tambah-petugas') dockBtnId = 'dock-menu-personil';
 
             if(dockBtnId) {
                 const dockBtn = document.getElementById(dockBtnId);
@@ -2283,16 +2389,7 @@
             navigateView('data-pnp');
         }
 
-        function toggleModalPetugas(show) {
-            const modal = document.getElementById('modalPetugas');
-            if (show) {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            } else {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }
-        }
+        // Hapus toggleModalPetugas (Karena sudah jadi view form langsung)
 
         // --- Logika untuk Modal Detail Petugas ---
         let currentDetailUserIndex = -1; // Simpan Index yang sedang dibuka detailnya
@@ -2307,6 +2404,7 @@
             
             document.getElementById('detailNama').textContent = data.nama;
             document.getElementById('detailNoId').textContent = data.noId;
+            document.getElementById('detailRegu').textContent = data.regu || 'Regu 1';
             document.getElementById('detailJabatan').textContent = data.jabatan;
             document.getElementById('detailJobdesk').textContent = data.jobdesk || '-';
             document.getElementById('detailAlamat').textContent = data.alamat || '-';
@@ -2352,6 +2450,7 @@
         function submitPetugas(e) {
             e.preventDefault();
             const item = {
+                regu: document.getElementById('petRegu').value,
                 foto: document.getElementById('prevFotoPetugas').value,
                 nama: document.getElementById('petNama').value,
                 noId: document.getElementById('petNoId').value,
@@ -2366,9 +2465,9 @@
             };
             dataPetugasList.push(item);
             renderAllTables();
-            toggleModalPetugas(false);
             document.getElementById('formPetugas').reset();
-            showToast(`Petugas ${item.nama} berhasil ditambahkan!`, 'success');
+            showToast(`Petugas ${item.nama} berhasil ditambahkan ke ${item.regu}!`, 'success');
+            navigateView('data-anggota');
         }
 
         function deleteItem(type, idx) {
@@ -2403,6 +2502,7 @@
             if (user) {
                 document.getElementById('editNama').value = user.nama;
                 document.getElementById('editNoId').value = user.noId;
+                document.getElementById('editRegu').value = user.regu || 'Regu 1';
                 document.getElementById('editJabatan').value = user.jabatan;
                 document.getElementById('editJobdesk').value = user.jobdesk;
                 document.getElementById('editAlamat').value = user.alamat;
@@ -2421,12 +2521,21 @@
                 document.getElementById('formEditProfile').dataset.editTargetName = user.nama;
 
                 const fieldJabatan = document.getElementById('editJabatan');
+                const fieldRegu = document.getElementById('editRegu');
+                const iconJabatan = document.getElementById('editJabatanIcon');
+                
                 if (currentUser.jabatan !== 'Admin') {
-                    fieldJabatan.setAttribute('readonly', true);
+                    fieldJabatan.disabled = true;
+                    fieldRegu.disabled = true;
                     fieldJabatan.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-500');
+                    fieldRegu.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-500');
+                    if(iconJabatan) iconJabatan.classList.add('hidden');
                 } else {
-                    fieldJabatan.removeAttribute('readonly');
+                    fieldJabatan.disabled = false;
+                    fieldRegu.disabled = false;
                     fieldJabatan.classList.remove('bg-slate-100', 'cursor-not-allowed', 'text-slate-500');
+                    fieldRegu.classList.remove('bg-slate-100', 'cursor-not-allowed', 'text-slate-500');
+                    if(iconJabatan) iconJabatan.classList.remove('hidden');
                 }
 
                 const modal = document.getElementById('modalEditProfile');
@@ -2452,6 +2561,7 @@
                 dataPetugasList[userIndex].noId = document.getElementById('editNoId').value;
                 if (currentUser.jabatan === 'Admin') {
                     dataPetugasList[userIndex].jabatan = document.getElementById('editJabatan').value;
+                    dataPetugasList[userIndex].regu = document.getElementById('editRegu').value;
                 }
                 dataPetugasList[userIndex].jobdesk = document.getElementById('editJobdesk').value;
                 dataPetugasList[userIndex].alamat = document.getElementById('editAlamat').value;
@@ -2585,20 +2695,14 @@
             document.getElementById('badgeCountPatroli').textContent = dataPatroliList.length;
             document.getElementById('badgeCountKejadian').textContent = dataKejadianList.length;
             document.getElementById('badgeCountPnp').textContent = dataPnpList.length;
+            
+            const totalPersonilEl = document.getElementById('totalPersonilBadge');
+            if (totalPersonilEl) totalPersonilEl.textContent = `${dataPetugasList.length} Personil`;
 
-            if (!window.groupState) window.groupState = { patroli: {}, kejadian: {}, pnp: {} };
+            if (!window.groupState) window.groupState = { patroli: {}, kejadian: {}, pnp: {}, personil: {} };
 
             // Cek Hak Akses
             const hasEditAccess = currentUser && (currentUser.jabatan === 'Admin');
-            
-            const btnTambahPetugas = document.getElementById('btnTambahPetugas');
-            if (btnTambahPetugas) {
-                if (hasEditAccess) {
-                    btnTambahPetugas.classList.remove('hidden');
-                } else {
-                    btnTambahPetugas.classList.add('hidden');
-                }
-            }
 
             // === RENDER DATA PATROLI ===
             const tbPatroli = document.getElementById('tbodyPatroli');
@@ -2764,33 +2868,100 @@
                     `;
                 });
             }
-            tbPnp.innerHTML = pnpHtml;
+            if(tbPnp) tbPnp.innerHTML = pnpHtml;
 
-            // === RENDER DATA PETUGAS ===
+            // === RENDER DATA PETUGAS (DENGAN GROUPING & FILTER) ===
             const tbPetugas = document.getElementById('tbodyPetugas');
-            tbPetugas.innerHTML = dataPetugasList.map((d, i) => `
-                <tr class="hover:bg-slate-50 cursor-pointer transition-colors" onclick="showDetailPetugas(${i})">
-                    <td class="p-3 font-bold text-slate-500">${i + 1}</td>
-                    <td class="p-3">
-                        <img src="${extractImageUrl(d.foto)}" alt="${d.nama}" class="w-11 h-11 rounded-xl object-cover border border-slate-200" onerror="this.src='https://placehold.co/100x100/0f172a/ffffff?text=WK'">
-                    </td>
-                    <td class="p-3 font-bold text-slate-900 whitespace-nowrap">${d.nama}</td>
-                    <td class="p-3 font-mono text-rose-700 font-semibold whitespace-nowrap">${d.noId}</td>
-                    <td class="p-3 whitespace-nowrap"><span class="px-2 py-1 rounded bg-slate-100 text-slate-800 font-semibold">${d.jabatan}</span></td>
-                    <td class="p-3 max-w-xs">${d.jobdesk}</td>
-                    <td class="p-3 max-w-xs">${d.alamat}</td>
-                    <td class="p-3 font-mono whitespace-nowrap">${d.noHp}</td>
-                    <td class="p-3 font-mono whitespace-nowrap">${d.noKta}</td>
-                    <td class="p-3 font-mono whitespace-nowrap">${d.noIjazah}</td>
-                    <td class="p-3 font-mono text-sky-700 font-semibold whitespace-nowrap">${d.email || '-'}</td>
-                    <td class="p-3 text-center" onclick="event.stopPropagation()">
-                        ${hasEditAccess 
-                            ? `<button onclick="deleteItem('petugas', ${i})" class="text-rose-600 hover:text-rose-800 p-1" title="Hapus Data"><i class="fa-solid fa-trash-can"></i></button>`
-                            : `<i class="fa-solid fa-lock text-slate-300" title="Akses Dibatasi"></i>`
-                        }
-                    </td>
-                </tr>
-            `).join('');
+            if (tbPetugas) {
+                const filterRegu = document.getElementById('filterReguSelect') ? document.getElementById('filterReguSelect').value : 'All';
+                
+                let filteredPetugas = dataPetugasList;
+                if (filterRegu !== 'All') {
+                    filteredPetugas = dataPetugasList.filter(p => p.regu === filterRegu);
+                }
+
+                // Group by Regu
+                const groupedPetugas = groupBy(filteredPetugas, 'regu');
+                
+                // Define Order of Groups
+                const orderRegu = ['Management', 'Regu 1', 'Regu 2', 'Regu 3'];
+                const sortedReguKeys = Object.keys(groupedPetugas).sort((a, b) => {
+                    let idxA = orderRegu.indexOf(a);
+                    let idxB = orderRegu.indexOf(b);
+                    if(idxA === -1) idxA = 99;
+                    if(idxB === -1) idxB = 99;
+                    return idxA - idxB;
+                });
+
+                let petugasHtml = '';
+
+                sortedReguKeys.forEach(reguName => {
+                    const items = groupedPetugas[reguName];
+                    const safeClass = reguName.replace(/[^a-zA-Z0-9]/g, '');
+                    const isExpanded = window.groupState.personil[safeClass] !== false;
+                    const rowHidden = isExpanded ? '' : 'hidden';
+                    const iconRotated = isExpanded ? 'rotate-180' : '';
+
+                    // Styling Warna per Group Regu
+                    let bgGroupClass = 'bg-slate-200 text-slate-800'; // default
+                    let iconGroupClass = 'text-slate-600';
+                    
+                    if(reguName === 'Management') { bgGroupClass = 'bg-purple-600 text-white border-purple-700 hover:bg-purple-700'; iconGroupClass = 'text-purple-200'; }
+                    if(reguName === 'Regu 1') { bgGroupClass = 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'; iconGroupClass = 'text-blue-200'; }
+                    if(reguName === 'Regu 2') { bgGroupClass = 'bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700'; iconGroupClass = 'text-emerald-200'; }
+                    if(reguName === 'Regu 3') { bgGroupClass = 'bg-amber-500 text-white border-amber-600 hover:bg-amber-600'; iconGroupClass = 'text-amber-100'; }
+
+                    petugasHtml += `
+                        <tr class="${bgGroupClass} cursor-pointer border-y transition-colors shadow-sm" onclick="toggleGroup('personil', '${reguName}')">
+                            <td colspan="10" class="p-3.5">
+                                <div class="flex items-center justify-between font-extrabold text-sm tracking-wide">
+                                    <span class="flex items-center gap-3">
+                                        <i class="fa-solid fa-users-viewfinder ${iconGroupClass} text-lg drop-shadow-sm"></i>
+                                        ${reguName.toUpperCase()} 
+                                        <span class="ml-2 px-2 py-0.5 rounded-md bg-black/20 text-white text-[10px]">${items.length} Personil</span>
+                                    </span>
+                                    <i id="icon-personil-${safeClass}" class="fa-solid fa-chevron-down transition-transform duration-300 ${iconRotated}"></i>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+
+                    items.forEach(d => {
+                        const originalIndex = dataPetugasList.indexOf(d);
+                        
+                        // Icon Danru (Bintang)
+                        let jabIcon = '';
+                        if(d.jabatan === 'Danru') jabIcon = '<i class="fa-solid fa-star text-amber-500 mr-1 text-[10px]" title="Komandan Regu"></i>';
+                        if(d.jabatan === 'Chief Security') jabIcon = '<i class="fa-solid fa-shield-halved text-emerald-600 mr-1 text-[10px]" title="Chief"></i>';
+
+                        petugasHtml += `
+                            <tr class="hover:bg-slate-50 cursor-pointer transition-colors child-personil-${safeClass} ${rowHidden} border-b border-slate-100" onclick="showDetailPetugas(${originalIndex})">
+                                <td class="p-3">
+                                    <div class="w-12 h-12 rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+                                        <img src="${extractImageUrl(d.foto)}" alt="${d.nama}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100x100/0f172a/ffffff?text=WK'">
+                                    </div>
+                                </td>
+                                <td class="p-3 font-extrabold text-slate-900 whitespace-nowrap">${jabIcon}${d.nama}</td>
+                                <td class="p-3 font-mono text-rose-700 font-bold whitespace-nowrap">${d.noId}</td>
+                                <td class="p-3 whitespace-nowrap"><span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold border border-slate-200">${d.jabatan}</span></td>
+                                <td class="p-3 max-w-[180px] font-medium text-slate-600">${d.jobdesk}</td>
+                                <td class="p-3 max-w-[180px] truncate text-slate-500">${d.alamat}</td>
+                                <td class="p-3 font-mono whitespace-nowrap font-semibold">${d.noHp}</td>
+                                <td class="p-3 font-mono whitespace-nowrap text-slate-500">${d.noKta}</td>
+                                <td class="p-3 font-mono whitespace-nowrap text-slate-500">${d.noIjazah}</td>
+                                <td class="p-3 text-center" onclick="event.stopPropagation()">
+                                    ${hasEditAccess 
+                                        ? `<button onclick="deleteItem('petugas', ${originalIndex})" class="w-8 h-8 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition flex items-center justify-center shadow-sm mx-auto" title="Hapus Data"><i class="fa-solid fa-trash-can text-xs"></i></button>`
+                                        : `<i class="fa-solid fa-lock text-slate-300" title="Akses Dibatasi"></i>`
+                                    }
+                                </td>
+                            </tr>
+                        `;
+                    });
+                });
+
+                tbPetugas.innerHTML = petugasHtml;
+            }
 
             renderCharts();
         }
@@ -2913,7 +3084,7 @@
 
         function closeAllSheets() {
             const backdrop = document.getElementById('sheetBackdrop');
-            const sheets = ['sheetWalka', 'sheetAccount', 'sheetPhotoSource'];
+            const sheets = ['sheetWalka', 'sheetAccount', 'sheetPhotoSource', 'sheetPersonil'];
             
             backdrop.classList.add('opacity-0');
             sheets.forEach(id => {
@@ -3043,33 +3214,6 @@
         // ============================================================================
         // INTEGRASI BACKEND GOOGLE APPS SCRIPT (GAS BRIDGE)
         // ============================================================================
-        /* 
-           PANDUAN GOOGLE APPS SCRIPT (GAS) UNTUK FORMULA =IMAGE():
-           ----------------------------------------------------------------------------
-           Karena frontend mengirimkan file gambar dalam bentuk 'Base64 String',
-           Anda harus mendekode Base64 tersebut di script.google.com, mengunggahnya ke
-           Google Drive, mengambil ID file-nya, dan mengubah nilainya menjadi formula =IMAGE().
-           
-           Contoh Snippet Fungsi di Code.gs Anda:
-           
-           function saveBase64ToDriveAndGetImageUrl(base64Data, fileName) {
-               if(!base64Data || !base64Data.includes('base64,')) return base64Data;
-               
-               var folder = DriveApp.getFolderById("ID_FOLDER_GOOGLE_DRIVE_ANDA_DISINI");
-               var splitBase = base64Data.split(',');
-               var contentType = splitBase[0].split(':')[1].split(';')[0];
-               var blob = Utilities.newBlob(Utilities.base64Decode(splitBase[1]), contentType, fileName);
-               
-               var file = folder.createFile(blob);
-               file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-               
-               // Kembalikan dalam format Formula IMAGE yang valid untuk Sheets
-               var url = "https://drive.google.com/uc?export=view&id=" + file.getId();
-               return '=IMAGE("' + url + '")'; 
-           }
-           ----------------------------------------------------------------------------
-        */
-        
         const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxImb4lCZ5J_h5LDDVKZbMopk3Jno8LmQwa0o_tlGHc50sTy43MV2wb4nvXz0loIII9/exec';
 
         function callBackend(action, data = {}) {
@@ -3196,6 +3340,7 @@
         submitPetugas = async function(e) {
             e.preventDefault();
             const item = {
+                regu: document.getElementById('petRegu').value,
                 foto: document.getElementById('prevFotoPetugas').value,
                 nama: document.getElementById('petNama').value,
                 noId: document.getElementById('petNoId').value,
@@ -3213,9 +3358,9 @@
             if (res && res.data) Object.assign(item, res.data);
             dataPetugasList.push(item);
             renderAllTables();
-            toggleModalPetugas(false);
             document.getElementById('formPetugas').reset();
-            showToast(`Petugas ${item.nama} berhasil ditambahkan!`, 'success');
+            showToast(`Petugas ${item.nama} berhasil ditambahkan ke ${item.regu}!`, 'success');
+            navigateView('data-anggota');
         };
 
         const _origHandleRegister = handleRegister;
@@ -3229,7 +3374,11 @@
             const pass = document.getElementById('regPassword').value.trim();
             const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
             
+            let defaultRegu = 'Regu 1';
+            if (jabatan === 'Admin' || jabatan === 'Chief Security') defaultRegu = 'Management';
+
             const newOfficer = {
+                regu: defaultRegu,
                 foto: `https://placehold.co/160x160/e11d48/ffffff?text=${initials}`,
                 nama: name,
                 noId: id,
