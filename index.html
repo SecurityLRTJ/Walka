@@ -3031,7 +3031,7 @@
         // ============================================================================
         
         // Jika HTML di-host di luar Apps Script (misal Vercel/GitHub), isi URL Web App di bawah ini:
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyt8kJNGavTTb7Ukved5iA5cjczDsXSp6AeKjYi4PU3-7Q2DYiM-ZeP2lCPOJb09Bw5/exec'; // Contoh: 'https://script.google.com/macros/s/AKfycb.../exec'
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyt5pbKd3AmcecQiW3p0r0SP_n1xJjbJ7N-j5aJ3_na0y1SahBvLVT_WTFpvr8yK5TA/exec'; // Contoh: 'https://script.google.com/macros/s/AKfycb.../exec'
 
         // Fungsi Universal Pemanggil Backend (Mendukung google.script.run & fetch API)
         function callBackend(action, data = {}) {
@@ -3044,6 +3044,7 @@
                 } else if (GAS_WEB_APP_URL !== '') {
                     fetch(GAS_WEB_APP_URL, {
                         method: 'POST',
+                        redirect:'follow',// Cegah Error
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify({ action: action, data: data })
                     })
