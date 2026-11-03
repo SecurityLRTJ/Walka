@@ -1909,7 +1909,7 @@
         const DEFAULT_BANNER_URL = 'https://cms.disway.id/uploads/fbb013a3f898a7d5855f9b8111afc573.jpg';
         const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxImb4lCZ5J_h5LDDVKZbMopk3Jno8LmQwa0o_tlGHc50sTy43MV2wb4nvXz0loIII9/exec';
         const GOOGLE_MAPS_API_KEY = 'AIzaSyCmgH8T5ozB4shDUnsGIWmCqxcm2h94ok8';
-        const DOKUMEN_FOTO = '1rMBeGjbxlrfYcXJp85Q1zzdJ2CNaqcvC?hl=ID';
+        const Aplikasi_Walka = '18Zd94vnpEWNv1ScTvYZD07gwbZUVQiGb';
 
         let currentUser = JSON.parse(localStorage.getItem('walkaUser')) || null;
 
@@ -2725,6 +2725,10 @@
 
         async function submitPatroli(e) {
             e.preventDefault();
+            
+            showToast('Menyimpan data dan mengunggah foto ke Google Drive, harap tunggu...', 'info');
+            document.querySelector('#formPatroli button[type="submit"]').disabled = true;
+
             const shiftSel = document.getElementById('patShift');
             const shiftLabel = shiftSel.options[shiftSel.selectedIndex].text.includes('Pagi') ? 'Pagi' : 'Siang';
             const reqRegu = document.getElementById('patRegu').value.replace('Regu ', '');
@@ -2750,10 +2754,16 @@
             };
             
             // Simpan ke Aplikasi & Spreadsheet
+            const res = await callBackend('savePatroli', item);
+            
+            // Update URL Foto jika berubah jadi GDrive Link
+            if(res && res.status === 'success' && res.data) {
+                item.fotoPatroli = res.data.fotoPatroli;
+            }
+            
             dataPatroliList.unshift(item);
             saveRealDataCache();
             renderAllTables();
-            await callBackend('savePatroli', item);
             forceSync(true);
 
             // Format Pesan WA
@@ -2782,17 +2792,24 @@ Izin melaporkan checklist patroli Keberangkatan Kereta pertama yang beroperasi h
 - *Apar*                       \`\`\`: ${item.apar}\`\`\`
 - *Intercom Darurat* \`\`\`: ${item.interkom}\`\`\`
 
+*Lampiran Dokumentasi:*
+${item.fotoPatroli}
+
 Demikian Laporan Checklist Keberangkatan Kereta Pertama yang beroperasi hari ini, terimakasih.`;
 
             // Buka WhatsApp
             window.open('https://wa.me/?text=' + encodeURIComponent(waText), '_blank');
 
-            showToast('Laporan Keberangkatan berhasil dikirim!', 'success');
+            document.querySelector('#formPatroli button[type="submit"]').disabled = false;
+            showToast('Laporan Keberangkatan berhasil dikirim & disimpan!', 'success');
             navigateView('data-patroli');
         }
 
         async function submitKejadian(e) {
             e.preventDefault();
+            showToast('Menyimpan data dan mengunggah foto ke Google Drive, harap tunggu...', 'info');
+            document.querySelector('#formKejadian button[type="submit"]:last-child').disabled = true;
+
             const item = {
                 hariTgl: document.getElementById('kejHariTgl').value,
                 lokasi: document.getElementById('kejLokasi').value,
@@ -2805,17 +2822,34 @@ Demikian Laporan Checklist Keberangkatan Kereta Pertama yang beroperasi hari ini
                 fotoTindakan: document.getElementById('prevFotoTindakan').value,
                 waktuTindakan: document.getElementById('kejWaktuTindakan').value
             };
+            
+            const res = await callBackend('saveKejadian', item);
+            if(res && res.status === 'success' && res.data) {
+                item.fotoKejadian = res.data.fotoKejadian;
+                item.fotoTindakan = res.data.fotoTindakan;
+            }
+
             dataKejadianList.unshift(item);
             saveRealDataCache();
             renderAllTables();
-            await callBackend('saveKejadian', item);
             forceSync(true);
-            showToast('Laporan Kejadian berhasil disimpan ke Spreadsheet!', 'success');
+
+            // Buka WhatsApp
+            const greeting = getWhatsappGreeting(item.waktu);
+            const longDate = formatWA_Date(item.hariTgl);
+            const waText = `*${greeting}*\n\nIzin melaporkan *Kejadian* di area LRT Jakarta.\n\n\`\`\`Hari/Tanggal :\`\`\` ${longDate}\n\`\`\`Waktu        :\`\`\` ${item.waktu} WIB\n\`\`\`Lokasi       :\`\`\` ${item.lokasi}\n\`\`\`Petugas      :\`\`\` ${item.petugas}\n\n*Kronologi Kejadian:*\n${item.kronologi}\n\n*Tindakan Dilakukan:*\n${item.tindakan}\n\n*Kerugian:*\n${item.kerugian}\n*Waktu Selesai:* ${item.waktuTindakan} WIB\n\n*Lampiran Dokumentasi Kejadian:*\n${item.fotoKejadian}\n\nDemikian laporan kejadian yang dapat disampaikan. Terimakasih.`;
+            window.open('https://wa.me/?text=' + encodeURIComponent(waText), '_blank');
+
+            document.querySelector('#formKejadian button[type="submit"]:last-child').disabled = false;
+            showToast('Laporan Kejadian berhasil dikirim & disimpan!', 'success');
             navigateView('data-kejadian');
         }
 
         async function submitPnp(e) {
             e.preventDefault();
+            showToast('Menyimpan data dan mengunggah foto ke Google Drive, harap tunggu...', 'info');
+            document.querySelector('#formPnp button[type="submit"]:last-child').disabled = true;
+
             const item = {
                 hariTgl: document.getElementById('pnpHariTgl').value,
                 jam: document.getElementById('pnpJam').value,
@@ -2826,17 +2860,31 @@ Demikian Laporan Checklist Keberangkatan Kereta Pertama yang beroperasi hari ini
                 keterangan: document.getElementById('pnpKeterangan').value,
                 fotoPnp: document.getElementById('prevFotoPnp').value
             };
+            
+            const res = await callBackend('savePnp', item);
+            if(res && res.status === 'success' && res.data) {
+                item.fotoPnp = res.data.fotoPnp;
+            }
+
             dataPnpList.unshift(item);
             saveRealDataCache();
             renderAllTables();
-            await callBackend('savePnp', item);
             forceSync(true);
-            showToast('Laporan Jumlah PNP berhasil disimpan ke Spreadsheet!', 'success');
+
+            // Buka WhatsApp
+            const greeting = getWhatsappGreeting(item.jam);
+            const longDate = formatWA_Date(item.hariTgl);
+            const waText = `*${greeting}*\n\nIzin melaporkan *Jumlah Penumpang (PNP)* yang berada di dalam kereta.\n\n\`\`\`Hari/Tanggal :\`\`\` ${longDate}\n\`\`\`Jam          :\`\`\` ${item.jam} WIB\n\`\`\`No LRV       :\`\`\` ${item.noLrv}\n\`\`\`Nama Walka   :\`\`\` ${item.namaWalka}\n\n*Total PNP:* ${item.jumlah} Orang\n\n*Keterangan:*\n${item.keterangan}\n\n*Lampiran Dokumentasi:*\n${item.fotoPnp}\n\nDemikian Laporan Jumlah Penumpang. Terimakasih.`;
+            window.open('https://wa.me/?text=' + encodeURIComponent(waText), '_blank');
+
+            document.querySelector('#formPnp button[type="submit"]:last-child').disabled = false;
+            showToast('Laporan Jumlah PNP berhasil dikirim & disimpan!', 'success');
             navigateView('data-pnp');
         }
 
         async function submitPetugas(e) {
             e.preventDefault();
+            showToast('Membuat anggota & upload foto, harap tunggu...', 'info');
             const item = {
                 foto: document.getElementById('prevFotoPetugas').value,
                 banner: document.getElementById('prevBannerPetugas').value || DEFAULT_BANNER_URL,
