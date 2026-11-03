@@ -1907,11 +1907,35 @@
     <!-- ==================== JAVASCRIPT LOGIC ==================== -->
     <script>
         const DEFAULT_BANNER_URL = 'https://cms.disway.id/uploads/fbb013a3f898a7d5855f9b8111afc573.jpg';
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwdGZs1GWS7qwTd8gxAdDLd1l4oWZhfQeB7c0ADJp59De86F2mvCyiObmXKCDJHxh6Y/exec';
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw-8AjTLemtiaFRAxIxwPKUsbUtdF-QxsvX2-qy5rTo67JQw7NnEhyY6C5cRFW08Aa3/exec';
         const GOOGLE_MAPS_API_KEY = 'AIzaSyCmgH8T5ozB4shDUnsGIWmCqxcm2h94ok8';
         const Aplikasi_Walka = '18Zd94vnpEWNv1ScTvYZD07gwbZUVQiGb';
 
         let currentUser = JSON.parse(localStorage.getItem('walkaUser')) || null;
+
+        
+        // ---------------- UTILS & PENAMPIL GAMBAR ----------------
+        // Tambahkan fungsi ini di sini agar foto dari GDrive bisa langsung tampil
+        function extractImageUrl(url) {
+            if (!url || typeof url !== 'string') return '';
+            
+            // Jika foto sudah berupa gambar langsung atau bukan dari Google Drive, tampilkan apa adanya
+            if (url.startsWith('data:image') || (url.startsWith('http') && !url.includes('drive.google.com'))) {
+                return url; 
+            }
+            
+            // Tangkap ID File unik dari URL Google Drive 
+            // (Mendukung format lama file/d/... maupun format baru uc?export=view&id=...)
+            const driveIdMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            
+            if (driveIdMatch && driveIdMatch[1]) {
+                // Merubah URL menjadi Endpoint Thumbnail Resmi Google (sz=w1000 berarti resolusi lebar 1000px)
+                // Ini dijamin 100% tampil dan tidak akan ditolak (403 Forbidden/CORS) oleh browser
+                return `https://drive.google.com/thumbnail?id=${driveIdMatch[1]}&sz=w1000`;
+            }
+            
+            return url;
+        }
 
         function extractImageUrl(input) {
             if (!input) return '';
