@@ -1924,14 +1924,13 @@
                 return url; 
             }
             
-            // Tangkap ID File unik dari URL Google Drive 
-            // (Mendukung format lama file/d/... maupun format baru uc?export=view&id=...)
+            // Tangkap ID File unik dari URL Google Drive di Spreadsheet
             const driveIdMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
             
             if (driveIdMatch && driveIdMatch[1]) {
-                // Merubah URL menjadi Endpoint Thumbnail Resmi Google (sz=w1000 berarti resolusi lebar 1000px)
-                // Ini dijamin 100% tampil dan tidak akan ditolak (403 Forbidden/CORS) oleh browser
-                return `https://drive.google.com/thumbnail?id=${driveIdMatch[1]}&sz=w1000`;
+                // Menggunakan parameter 'export=download' agar foto tampil dengan resolusi aslinya
+                // Ini akan langsung dirender oleh tag <img> di HTML tanpa ditolak browser
+                return `https://drive.google.com/uc?export=download&id=${driveIdMatch[1]}`;
             }
             
             return url;
