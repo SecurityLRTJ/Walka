@@ -1914,6 +1914,24 @@
         let currentUser = JSON.parse(localStorage.getItem('walkaUser')) || null;
 
         function extractImageUrl(input) {
+
+            if (!url || typeof url !== 'string') return '';
+            
+            // Jika foto sudah berupa gambar langsung atau bukan dari Google Drive, tampilkan apa adanya
+            if (url.startsWith('data:image') || (url.startsWith('http') && !url.includes('drive.google.com'))) {
+                return url; 
+            }
+            
+            // Tangkap ID File unik dari URL Google Drive 
+            // (Mendukung format lama file/d/... maupun format baru uc?export=view&id=...)
+            const driveIdMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            
+            if (driveIdMatch && driveIdMatch[1]) {
+                // Merubah URL menjadi Endpoint Thumbnail Resmi Google (sz=w1000 berarti resolusi lebar 1000px)
+                // Ini dijamin 100% tampil dan tidak akan ditolak (403 Forbidden/CORS) oleh browser
+                return `https://drive.google.com/thumbnail?id=${driveIdMatch[1]}&sz=w1000`;
+            }
+            
             if (!input) return '';
             let url = input;
             const matchFormula = input.match(/^=IMAGE\(['"]([^'"]+)['"]\)/i);
