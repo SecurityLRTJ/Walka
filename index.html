@@ -1932,36 +1932,6 @@
                 return `https://drive.google.com/thumbnail?id=${driveIdMatch[1]}&sz=w1000`;
             }
             
-            if (!input) return '';
-            let url = input;
-            const matchFormula = input.match(/^=IMAGE\(['"]([^'"]+)['"]\)/i);
-            if (matchFormula && matchFormula[1]) {
-                url = matchFormula[1];
-            }
-            
-            // Format 1: drive.google.com/file/d/ID
-            const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
-            if (driveMatch && driveMatch[1]) {
-                return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
-            }
-            
-            // Format 2: drive.google.com/open?id=ID
-            const driveOpenMatch = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
-            if (driveOpenMatch && driveOpenMatch[1]) {
-                return `https://drive.google.com/uc?export=download&id=${driveOpenMatch[1]}`;
-            }
-
-            // Format 3: Merubah export=view menjadi export=download agar BISA MUNCUL DI APLIKASI WEB
-            const viewMatch = url.match(/drive\.google\.com\/uc\?export=view&id=([^&]+)/);
-            if (viewMatch && viewMatch[1]) {
-                return `https://drive.google.com/uc?export=download&id=${viewMatch[1]}`;
-            }
-
-            // Format 4: Jika URL mengandung kata Gagal Upload (Error Handling)
-            if (url.includes("Gagal Upload")) {
-                return 'https://placehold.co/300x200/9f1239/ffffff?text=Gagal+Upload';
-            }
-
             return url;
         }
 
