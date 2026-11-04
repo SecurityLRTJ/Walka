@@ -1912,61 +1912,38 @@
         const Aplikasi_Walka = '18Zd94vnpEWNv1ScTvYZD07gwbZUVQiGb';
 
         let currentUser = JSON.parse(localStorage.getItem('walkaUser')) || null;
-
         
-        // ---------------- UTILS & PENAMPIL GAMBAR ----------------
-        // Tambahkan fungsi ini di sini agar foto dari GDrive bisa langsung tampil
-        function extractImageUrl(url) {
-            if (!url || typeof url !== 'string') return '';
-            
-            // Jika foto sudah berupa gambar langsung atau bukan dari Google Drive, tampilkan apa adanya
-            if (url.startsWith('data:image') || (url.startsWith('http') && !url.includes('drive.google.com'))) {
-                return url; 
-            }
-            
-            // Tangkap ID File unik dari URL Google Drive di Spreadsheet
-            const driveIdMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-            
-            if (driveIdMatch && driveIdMatch[1]) {
-                // Menggunakan parameter 'export=download' agar foto tampil dengan resolusi aslinya
-                // Ini akan langsung dirender oleh tag <img> di HTML tanpa ditolak browser
-                return `https://drive.google.com/uc?export=download&id=${driveIdMatch[1]}`;
-            }
-            
-            return url;
-        }
-
+        // HAPUS KEDUA FUNGSI extractImageUrl LAMA ANDA, LALU GANTI DENGAN 1 FUNGSI GABUNGAN INI:
         function extractImageUrl(input) {
-            if (!input) return '';
+            if (!input || typeof input !== 'string') return '';
+
+            // 1. Jika URL mengandung kata Gagal Upload (Error Handling)
+            if (input.includes("Gagal Upload")) {
+                return 'https://placehold.co/300x200/9f1239/ffffff?text=Gagal+Upload';
+            }
+
             let url = input;
+            
+            // 2. Ekstrak URL jika terbungkus rumus =IMAGE("...") di Spreadsheet
             const matchFormula = input.match(/^=IMAGE\(['"]([^'"]+)['"]\)/i);
             if (matchFormula && matchFormula[1]) {
                 url = matchFormula[1];
             }
             
-            // Format 1: drive.google.com/file/d/ID
-            const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
-            if (driveMatch && driveMatch[1]) {
-                return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+            // 3. Jika foto sudah berupa gambar langsung atau bukan dari Google Drive, tampilkan apa adanya
+            if (url.startsWith('data:image') || (url.startsWith('http') && !url.includes('drive.google.com'))) {
+                return url; 
             }
             
-            // Format 2: drive.google.com/open?id=ID
-            const driveOpenMatch = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
-            if (driveOpenMatch && driveOpenMatch[1]) {
-                return `https://drive.google.com/uc?export=download&id=${driveOpenMatch[1]}`;
+            // 4. Tangkap ID File unik dari URL Google Drive (mencakup SEMUA format URL)
+            const driveIdMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            
+            if (driveIdMatch && driveIdMatch[1]) {
+                // 5. MENGGUNAKAN JALUR THUMBNAIL DENGAN PARAMETER sz=s0 (SIZE ORIGINAL)
+                // Ini akan diizinkan 100% oleh Google dan ukuran foto tetap jernih/asli
+                return `https://drive.google.com/thumbnail?id=${driveIdMatch[1]}&sz=s0`;
             }
-
-            // Format 3: Merubah export=view menjadi export=download agar BISA MUNCUL DI APLIKASI WEB
-            const viewMatch = url.match(/drive\.google\.com\/uc\?export=view&id=([^&]+)/);
-            if (viewMatch && viewMatch[1]) {
-                return `https://drive.google.com/uc?export=download&id=${viewMatch[1]}`;
-            }
-
-            // Format 4: Jika URL mengandung kata Gagal Upload (Error Handling)
-            if (url.includes("Gagal Upload")) {
-                return 'https://placehold.co/300x200/9f1239/ffffff?text=Gagal+Upload';
-            }
-
+            
             return url;
         }
 
