@@ -1907,7 +1907,7 @@
     <!-- ==================== JAVASCRIPT LOGIC ==================== -->
     <script>
         const DEFAULT_BANNER_URL = 'https://cms.disway.id/uploads/fbb013a3f898a7d5855f9b8111afc573.jpg';
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw-8AjTLemtiaFRAxIxwPKUsbUtdF-QxsvX2-qy5rTo67JQw7NnEhyY6C5cRFW08Aa3/exec';
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzl1KTTJ_mqEPtRqaMhnuTqyHEcXhT8KsoSYFkPavoHVgRarutOojdKZGlAPIvVk_w0/exec';
         const GOOGLE_MAPS_API_KEY = 'AIzaSyCmgH8T5ozB4shDUnsGIWmCqxcm2h94ok8';
         const Aplikasi_Walka = '18Zd94vnpEWNv1ScTvYZD07gwbZUVQiGb';
 
@@ -1946,6 +1946,113 @@
             
             return url;
         }
+
+        // ==========================================
+        // FITUR LIVE TRACKING GPS ANTAR ANGGOTA
+        // ==========================================
+        let liveUserMarkers = {};
+        let liveTrackingStarted = false;
+
+        // Tentukan warna marker berdasakan Regu
+        function getReguColor(regu) {
+            regu = (regu || "").toLowerCase();
+            if(regu.includes('1')) return '#075985'; // Biru (Regu 1)
+            if(regu.includes('2')) return '#065f46'; // Hijau (Regu 2)
+            if(regu.includes('3')) return '#92400e'; // Oranye (Regu 3)
+            if(regu.includes('management')) return '#3730a3'; // Ungu (Management)
+            return '#0f172a'; // Hitam (Default)
+        }
+
+        // Render anggota lain ke Map
+        function renderLiveUsers(locations) {
+            if (typeof map === 'undefined' || !map) return; // Pastikan Peta Leaflet sudah dimuat
+
+            for (let nama in locations) {
+                let loc = locations[nama];
+                
+                if (liveUserMarkers[nama]) {
+                    // Update posisi marker jika user sudah bergerak
+                    liveUserMarkers[nama].setLatLng([loc.lat, loc.lng]);
+                } else {
+                    // Buat marker custom elegan (Bulat dengan huruf pertama Nama)
+                    const iconHtml = `<div style="background-color: ${getReguColor(loc.regu)}; width: 35px; height: 35px; border-radius: 50%; border: 3px solid white; display: flex; justify-content: center; align-items: center; color: white; font-size: 14px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.5);">${nama.charAt(0).toUpperCase()}</div>`;
+                    
+                    const divIcon = L.divIcon({
+                        html: iconHtml,
+                        className: '',
+                        iconSize: [35, 35],
+                        iconAnchor: [17, 17],
+                        popupAnchor: [0, -17]
+                    });
+
+                    // Taruh pin di peta
+                    let marker = L.marker([loc.lat, loc.lng], {icon: divIcon})
+                      .bindPopup(`<b>${nama}</b><br/><span style="color: ${getReguColor(loc.regu)}; font-weight: 600;">${loc.regu}</span>`)
+                      .addTo(map);
+                      
+                    liveUserMarkers[nama] = marker;
+                }
+            }
+            
+            // Hapus pin dari peta untuk petugas yang sudah offline/logout
+            for (let nama in liveUserMarkers) {
+                if (!locations[nama]) {
+                    map.removeLayer(liveUserMarkers[nama]);
+                    delete liveUserMarkers[nama];
+                }
+            }
+        }
+
+        // Nyalakan pemantau satelit & Sinkronisasi
+        function startLiveTracking() {
+            if (!navigator.geolocation) {
+                console.warn("GPS Tidak Didukung di perangkat ini.");
+                return;
+            }
+
+            // Pemantauan Lokasi Real-Time berjalan di background
+            navigator.geolocation.watchPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Deteksi URL API dari kodingan form Anda (biasanya bernama scriptURL atau GOOGLE_SCRIPT_URL)
+                    const apiUrl = typeof scriptURL !== 'undefined' ? scriptURL : (typeof GOOGLE_SCRIPT_URL !== 'undefined' ? GOOGLE_SCRIPT_URL : '');
+                    
+                    if(apiUrl && currentUser && currentUser.nama) {
+                        fetch(apiUrl, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                action: 'updateLocation',
+                                data: {
+                                    nama: currentUser.nama,
+                                    regu: currentUser.regu,
+                                    lat: lat,
+                                    lng: lng
+                                }
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(res => {
+                            if (res.status === 'success' && res.data) {
+                                renderLiveUsers(res.data);
+                            }
+                        }).catch(err => console.warn("Background Sync Tracker:", err.message));
+                    }
+                },
+                (error) => { console.warn("GPS Error:", error.message); },
+                { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+            );
+        }
+
+        // Trigger Otomatis: Aplikasi akan rutin mengecek setiap 3 detik. 
+        // Jika petugas sudah lolos login (currentUser ada), GPS Tracker diaktifkan.
+        setInterval(() => {
+            if (typeof currentUser !== 'undefined' && currentUser !== null && !liveTrackingStarted) {
+                liveTrackingStarted = true;
+                startLiveTracking();
+            }
+        }, 3000);
 
         // --- GENERATE 23 DATA PERSONIL WALKA (Regu 1, Regu 2, Regu 3, Management) ---
         function generateInitialPetugasList() {
@@ -3668,42 +3775,39 @@ Demikian Laporan Checklist Keberangkatan Kereta Pertama yang beroperasi hari ini
 
         // Titik Lengkung Rel (Waypoints) Presisi Tinggi Sesuai Jalan & Rel Asli LRTJ 2026
         const lrtRoutePath2026 = [
-            [-6.1575412, 106.9141713], // St. Kelapa Gading
-            [-6.157833, 106.912644],   // Curve Boulevard Raya
-            [-6.158434, 106.909949],   // Curve Boulevard Raya
-            [-6.1592126, 106.9060438], // St. Boulevard Utara
-            [-6.161309, 106.904423],   // Lurus Boulevard Raya
-            [-6.164344, 106.902267],   // Lurus Boulevard Raya
-            [-6.166348, 106.901173],   // Menjelang B. Selatan
-            [-6.1688518, 106.8999523], // St. Boulevard Selatan
-            [-6.170500, 106.898850],   // Persimpangan Perintis Kemerdekaan
-            [-6.171804, 106.897258],   // Belokan masuk Jl. Kayu Putih
-            [-6.174175, 106.895393],   // Lurus Jl. Kayu Putih
-            [-6.1763397, 106.8937402], // St. Pulomas
-            [-6.179830, 106.892550],   // Lurus Jl. Kayu Putih (Waduk)
-            [-6.1834980, 106.8912364], // St. Equestrian
-            [-6.187895, 106.891100],   // Lurus mendekati Velodrome
-            [-6.191244, 106.891100],   // Depan JIC Velodrome
-            [-6.1922460, 106.8910886], // St. Velodrome
-            [-6.193235, 106.891000],   // Belokan Arion ke Jl. Pemuda
-            [-6.193498, 106.890000],   // Awal Jl. Pemuda
-            [-6.193278, 106.885661],   // Lurus Jl. Pemuda (Lab School)
-            [-6.1930291, 106.8826108], // St. Rawamangun
-            [-6.192750, 106.878500],   // Menuju underpass/Pramuka
-            [-6.192534, 106.874836],   // Perlintasan Pramuka - Pemuda
-            [-6.1917896, 106.8705577], // St. Pramuka (BPKP)
-            [-6.192270, 106.868000],   // Jl. Pramuka (Pasar Genjing)
-            [-6.193322, 106.864319],   // Lurus Jl. Pramuka
-            [-6.1948279, 106.8599558], // St. Matraman
-            [-6.196500, 106.856500],   // Flyover Matraman
-            [-6.199419, 106.852924],   // Belokan Jl. Tambak
-            [-6.2019101, 106.8502589], // St. Proklamasi (Tambak)
-            [-6.204500, 106.848500],   // Lurus menuju Manggarai
-            [-6.205934, 106.847525],   // Tikungan Stasiun Manggarai
-            [-6.207500, 106.846500],   // Masuk area Manggarai
-            [-6.2084973, 106.8457110]  // St. Manggarai
+            [-6.157423, 106.914297], // Stasiun Kelapa Gading
+            [-6.155490, 106.914336], // P01
+            [-6.155037, 106.914012], // P02
+            [-6.154564, 106.909173], // P03
+            [-6.159184, 106.906023], // Stasiun Boulevard Utara SM
+            [-6.169050, 106.900084], // Stasiun Boulevard Selatan
+            [-6.175150, 106.896142], // P04
+            [-6.176239, 106.894347], // P05
+            [-6.177311, 106.893465], // Stasiun Pulomas
+            [-6.178753, 106.892615], // P06
+            [-6.180684, 106.891912], // P07
+            [-6.183619, 106.891362], // Stasiun Equestrian
+            [-6.189037, 106.891175], // P08
+            [-6.192562, 106.891227], // Stasiun Velodrome
+            [-6.193151, 106.891137], // P09
+            [-6.193558, 106.890654], // P10
+            [-6.193321, 106.883695], // Stasiun Rawamangun
+            [-6.192098, 106.873279], // P11
+            [-6.192094, 106.870644], // Stasiun Pramuka
+            [-6.192315, 106.868065], // P12
+            [-6.192785, 106.864633], // P13
+            [-6.193211, 106.863216], // P14
+            [-6.194374, 106.861126], // P15
+            [-6.195117, 106.860016], // Stasiun Matraman
+            [-6.201268, 106.851747], // P16
+            [-6.202240, 106.850069], // Stasiun Proklamasi
+            [-6.202676, 106.849526], // P17
+            [-6.204699, 106.849174], // P18
+            [-6.207098, 106.848716], // P19
+            [-6.208465, 106.848222], // P20
+            [-6.208697, 106.845641]  // Stasiun Manggarai
         ];
-
+        
         function initMap() {
             if (mapInstance) return;
             mapInstance = L.map('mapContainer', { zoomControl: true }).setView([-6.183497998328656, 106.88261080722143], 13);
