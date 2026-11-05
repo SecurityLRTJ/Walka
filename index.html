@@ -2449,30 +2449,40 @@
             }
         }
 
-        function handleLogin(e) {
-            e.preventDefault();
-            const email = document.getElementById('loginUsername').value.trim();
-            const pass = document.getElementById('loginPassword').value.trim();
+            function handleLogin(e) {
+                e.preventDefault();
+                const email = document.getElementById('loginUsername').value.trim();
+                const pass = document.getElementById('loginPassword').value.trim();
+                
+                const matchedOfficer = dataPetugasList.find(p => p.email.toLowerCase() === email.toLowerCase() && p.password === pass);
             
-            const matchedOfficer = dataPetugasList.find(p => p.email.toLowerCase() === email.toLowerCase() && p.password === pass);
-
-            if (matchedOfficer) {
-                currentUser = {
-                    name: matchedOfficer.nama,
-                    id: matchedOfficer.noId,
-                    regu: matchedOfficer.regu || 'Regu 1',
-                    jabatan: matchedOfficer.jabatan,
-                    photo: matchedOfficer.foto,
-                    banner: matchedOfficer.banner || DEFAULT_BANNER_URL,
-                    lrv: 'LRV-01',
-                    shift: 'P1'
-                };
-                localStorage.setItem('walkaUser', JSON.stringify(currentUser));
-                enterApplication(`Selamat bertugas, ${currentUser.name}!`);
-            } else {
-                showToast('Gagal! Email atau Password salah.', 'error');
+                if (matchedOfficer) {
+                    currentUser = {
+                        name: matchedOfficer.nama,
+                        id: matchedOfficer.noId,
+                        regu: matchedOfficer.regu || 'Regu 1',
+                        jabatan: matchedOfficer.jabatan,
+                        photo: matchedOfficer.foto,
+                        banner: matchedOfficer.banner || DEFAULT_BANNER_URL,
+                        lrv: 'LRV-01',
+                        shift: 'P1'
+                    };
+                    localStorage.setItem('walkaUser', JSON.stringify(currentUser));
+                    
+                    // --- TAMBAHKAN BARIS INI UNTUK MENCATAT RIWAYAT LOGIN ---
+                    callBackend('riwayatLogin', {
+                        nama: currentUser.name,
+                        noId: currentUser.id,
+                        regu: currentUser.regu,
+                        jabatan: currentUser.jabatan
+                    });
+                    // --------------------------------------------------------
+            
+                    enterApplication(`Selamat bertugas, ${currentUser.name}!`);
+                } else {
+                    showToast('Gagal! Email atau Password salah.', 'error');
+                }
             }
-        }
 
         async function handleRegister(e) {
             e.preventDefault();
