@@ -293,6 +293,20 @@
         .gps-user-avatar {
             animation: gpsPulse 2s infinite;
         }
+        /* PERBAIKAN KONFLIK TAILWIND & LEAFLET */
+        .leaflet-container img {
+            max-width: none !important;
+            max-height: none !important;
+        }
+        .leaflet-container {
+            background-color: #cbd5e1 !important; /* Mencegah layar hitam, ganti jadi abu-abu standar */
+            z-index: 10 !important;
+        }
+        /* Memastikan tombol zoom leaflet tidak tertutup tema gelap */
+        .leaflet-control-zoom a {
+            color: #0f172a !important;
+            text-decoration: none !important;
+        }
     </style>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -613,14 +627,12 @@
                     </div>
 
                     <!-- 4. MENU MAPS -->
-                    <div id="lrtMap" class="w-full h-[600px] sm:h-[500px] z-10 relative">
                     <button type="button" onclick="navigateView('maps')" id="nav-maps" class="nav-item w-full flex items-center justify-between px-4 py-3.5 text-white/95 hover:bg-white/15 hover:text-white font-semibold transition group last:rounded-b-xl">
                         <span class="flex items-center gap-3.5">
                             <i class="fa-solid fa-map-location-dot w-5 text-center text-rose-100 group-hover:text-white text-base transition-transform group-hover:scale-110"></i>
                             <span class="sidebar-text text-xs tracking-wide">Maps</span>
                         </span>
                     </button>
-                    </div>
                 </div>
             </nav>
 
@@ -2008,30 +2020,18 @@
         }
 
         // Fungsi terpisah untuk rutin menyinkronkan data dengan server
-        function syncLiveLocations() {
-            const apiUrl = typeof scriptURL !== 'https://script.google.com/macros/s/AKfycbztTx2OVZk30zgtZarvIpcZbQJZnN-3ql4zlVjlfgJ7UpGZ76gWWrxv7KnAMpqEr9_J/exec' ? scriptURL : (typeof GOOGLE_SCRIPT_URL !== 'undefined' ? GOOGLE_SCRIPT_URL : 'https://script.google.com/macros/s/AKfycbztTx2OVZk30zgtZarvIpcZbQJZnN-3ql4zlVjlfgJ7UpGZ76gWWrxv7KnAMpqEr9_J/exec');
-            
-            if (apiUrl && typeof currentUser !== 'https://script.google.com/macros/s/AKfycbztTx2OVZk30zgtZarvIpcZbQJZnN-3ql4zlVjlfgJ7UpGZ76gWWrxv7KnAMpqEr9_J/exec' && currentUser && currentUser.nama) {
-                
-                // KUNCI UTAMA ANTI-BLOKIR: GUNAKAN METODE 'GET' REQUEST
-                const latStr = myLatestLocation ? myLatestLocation.lat : '';
-                const lngStr = myLatestLocation ? myLatestLocation.lng : '';
-                
-                // Susun URL untuk menembus blokir keamanan browser (CORS)
-                const fetchUrl = `${apiUrl}?action=updateLocation&nama=${encodeURIComponent(currentUser.nama)}&regu=${encodeURIComponent(currentUser.regu)}&lat=${latStr}&lng=${lngStr}`;
-
-                fetch(fetchUrl)
-                .then(response => response.json())
-                .then(res => {
-                    if (res.status === 'success' && res.data) {
-                        // Pastikan Peta Leaflet (map) sudah aktif
-                        if (typeof map !== 'undefined' && map) {
-                            renderLiveUsers(res.data);
-                        } else {
-                            console.warn("Peta Leaflet 'map' belum siap.");
-                        }
+        function syncLiveLocations(lat, lng) {
+            if (currentUser && currentUser.name) {
+                callBackend('updateLocation', {
+                    nama: currentUser.name,
+                    regu: currentUser.regu,
+                    lat: lat,
+                    lng: lng
+                }).then(res => {
+                    if (res && res.status === 'success' && res.data) {
+                        renderLiveUsers(res.data);
                     }
-                }).catch(err => console.warn("GPS Sync Error:", err.message));
+                }).catch(err => console.warn("GPS Sync Error", err));
             }
         }
 
@@ -2710,7 +2710,8 @@
         }
 
         function navigateView(viewKey) {
-            document.querySelectorAll('.view-section').forEach(sec => sec.classList.add('hidden'));
+        document.querySelectorAll('.view-section').forEach(sec => sec.classList.add('hidden'));
+        document.getElementById(`view-${viewKey}`).classList.remove('hidden');
             const targetSec = document.getElementById(`view-${viewKey}`);
             if (targetSec) targetSec.classList.remove('hidden');
 
@@ -2769,14 +2770,27 @@
             closeAllFlyouts();
             closeAllSheets();
 
-            if (viewKey === 'maps') {
-                setTimeout(() => {
-                    initMap();
-                    if (mapInstance) mapInstance.invalidateSize();
-                }, 150);
+            if (viewKey === 'menu-maps') {
+            setTimeout(() => {
+            // Jika peta belum pernah dibuat, buat sekarang di koordinat Depo Kelapa Gading
+            if (!lrtMap) {
+                initMap(-6.167, 106.908);
+            }
+            // Paksa Leaflet menghitung ulang ukuran layar agar tidak abu-abu/terpotong
+            lrtMap.invalidateSize();
+        }, 300); // Beri jeda 300ms agar CSS animasi transisi layar selesai
+    }
+
+    if (window.innerWidth < 1024) {
+                const sb = document.getElementById('sidebar');
+                const bd = document.getElementById('sidebarBackdrop');
+                if (sb && bd) {
+                    sb.classList.add('-translate-x-full');
+                    bd.classList.add('hidden');
+                }
             }
         }
-
+        
         // ---------------- MODAL PILIH SUMBER FOTO (TENGAH LAYAR) ----------------
         let currentUploadTarget = '';
 
@@ -3807,12 +3821,14 @@ Demikian Laporan Checklist Keberangkatan Kereta Pertama yang beroperasi hari ini
         // ---------------- MAPS, 11 STASIUN LRTJ (RUTE ORANYE), SEARCH, & LIVE GPS PROFIL ----------------
         let mapInstance = null;
         let stationMarkersLayer = null;
-        let userGpsMarker = null;
+        let userGpsMarker = null; // Marker kita sendiri (Hijau)
         let searchMarker = null;
         let watchPositionId = null;
+        let gpsIntervalId = null; // Interval sinkronisasi teman
         let lastKnownUserLat = null;
         let lastKnownUserLng = null;
         let isSearchExpanded = false;
+        let liveUserMarkers = {}; // Kumpulan marker petugas lain
 
         // 11 Koordinat Presisi Stasiun LRT Jakarta
         const lrtStationsData = [
@@ -4193,98 +4209,7 @@ Demikian Laporan Checklist Keberangkatan Kereta Pertama yang beroperasi hari ini
             navigateView('form-patroli');
         }, 100);
     }
-};
-
-                // ==========================================
-// LOGIKA RENDER PETA & LIVE MARKER (LEAFLET)
-// ==========================================
-let lrtMap = null;
-let markersLayer = null;
-let userMarkers = {};
-
-function initMap(lat, lng) {
-    if (lrtMap) return; // Cegah inisialisasi ganda
-    
-    // Set titik tengah awal (Default: Area Depo LRT Kelapa Gading)
-    const centerLat = lat || -6.167;
-    const centerLng = lng || 106.908;
-    
-    lrtMap = L.map('lrtMap').setView([centerLat, centerLng], 14);
-    
-    // Menggunakan OpenStreetMap 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-    }).addTo(lrtMap);
-    
-    markersLayer = L.layerGroup().addTo(lrtMap);
-}
-
-function renderMapMarkers(activeUsers) {
-    if (!activeUsers) return;
-    
-    // Bersihkan marker lama agar tidak menumpuk saat update
-    markersLayer.clearLayers();
-    userMarkers = {};
-    
-    const navPillsContainer = document.getElementById('lrvNavPills');
-    if (navPillsContainer) navPillsContainer.innerHTML = ''; 
-
-    // Looping semua user aktif yang dikirim dari Backend
-    for (const [nama, info] of Object.entries(activeUsers)) {
-        // Buat Marker/Pin Merah
-        const customIcon = L.divIcon({
-            className: 'custom-div-icon',
-            html: `<div class="w-8 h-8 bg-rose-600 border-2 border-white rounded-full flex items-center justify-center text-white shadow-lg animate-pulse"><i class="fa-solid fa-train-subway text-xs"></i></div>`,
-            iconSize: [32, 32],
-            iconAnchor: [16, 16]
-        });
-
-        const marker = L.marker([info.lat, info.lng], {icon: customIcon})
-            .bindPopup(`<div class="text-center"><b class="text-slate-800">${nama}</b><br><span class="text-xs text-rose-600 font-bold">${info.regu}</span></div>`);
-        
-        markersLayer.addLayer(marker);
-        userMarkers[nama] = marker;
-
-        // Update Info HUD khusus untuk user yang sedang login di HP ini
-        if (nama === currentUser.name) {
-            document.getElementById('hudActiveTrain').textContent = `${info.regu} - ${nama}`;
-            document.getElementById('hudNextStation').textContent = `Posisi: ${info.lat.toFixed(5)}, ${info.lng.toFixed(5)}`;
-            if (!lrtMap) initMap(info.lat, info.lng);
-        }
-
-        // Tambahkan tombol navigasi cepat di atas peta
-        if (navPillsContainer) {
-            navPillsContainer.innerHTML += `
-                <button onclick="focusOnUser('${nama}')" class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition text-left active:scale-95">
-                    <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-location-dot"></i>
-                    </div>
-                    <div class="overflow-hidden">
-                        <p class="text-[10px] font-bold text-slate-500 truncate">${info.regu}</p>
-                        <p class="text-xs font-bold text-slate-800 truncate">${nama}</p>
-                    </div>
-                </button>
-            `;
-        }
-    }
-}
-
-// Fungsi agar kamera peta meluncur (terbang) ke titik user tertentu
-function focusOnUser(nama) {
-    if (userMarkers[nama]) {
-        const latLng = userMarkers[nama].getLatLng();
-        lrtMap.flyTo(latLng, 17, { duration: 1.5 });
-        userMarkers[nama].openPopup();
-    }
-}
-
-function focusMyTrain() {
-    if (currentUser && currentUser.name) {
-        focusOnUser(currentUser.name);
-    }
-}
-                
+};         
     </script>
 </body>
 </html>
