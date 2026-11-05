@@ -1907,7 +1907,7 @@
     <!-- ==================== JAVASCRIPT LOGIC ==================== -->
     <script>
         const DEFAULT_BANNER_URL = 'https://cms.disway.id/uploads/fbb013a3f898a7d5855f9b8111afc573.jpg';
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby6pbgSwtME_xmxgpqQcF8vHwdct94wpF3HNw6euU_8kNTGf-0fftjCG3fQLoErq2HB/exec';
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxZ8Z0QTGHm7SKDMGH6iBGJ64oNi13T3D7I-ELbICP6YmclLi8yzabJhrQ9Fl_nMlqT/exec';
         const GOOGLE_MAPS_API_KEY = 'AIzaSyCmgH8T5ozB4shDUnsGIWmCqxcm2h94ok8';
         const Aplikasi_Walka = '18Zd94vnpEWNv1ScTvYZD07gwbZUVQiGb';
 
@@ -2008,31 +2008,27 @@
         function syncLiveLocations() {
             const apiUrl = typeof scriptURL !== 'undefined' ? scriptURL : (typeof GOOGLE_SCRIPT_URL !== 'undefined' ? GOOGLE_SCRIPT_URL : '');
             
-            if (apiUrl && currentUser && currentUser.nama) {
-                let payloadData = {
-                    nama: currentUser.nama,
-                    regu: currentUser.regu
-                };
+            if (apiUrl && typeof currentUser !== 'undefined' && currentUser && currentUser.nama) {
                 
-                // Jika sudah ada koordinat GPS, sisipkan ke dalam data
-                if (myLatestLocation) {
-                    payloadData.lat = myLatestLocation.lat;
-                    payloadData.lng = myLatestLocation.lng;
-                }
+                // KUNCI UTAMA ANTI-BLOKIR: GUNAKAN METODE 'GET' REQUEST
+                const latStr = myLatestLocation ? myLatestLocation.lat : '';
+                const lngStr = myLatestLocation ? myLatestLocation.lng : '';
+                
+                // Susun URL untuk menembus blokir keamanan browser (CORS)
+                const fetchUrl = `${apiUrl}?action=updateLocation&nama=${encodeURIComponent(currentUser.nama)}&regu=${encodeURIComponent(currentUser.regu)}&lat=${latStr}&lng=${lngStr}`;
 
-                fetch(apiUrl, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'updateLocation',
-                        data: payloadData
-                    })
-                })
+                fetch(fetchUrl)
                 .then(response => response.json())
                 .then(res => {
                     if (res.status === 'success' && res.data) {
-                        renderLiveUsers(res.data);
+                        // Pastikan Peta Leaflet (map) sudah aktif
+                        if (typeof map !== 'undefined' && map) {
+                            renderLiveUsers(res.data);
+                        } else {
+                            console.warn("Peta Leaflet 'map' belum siap.");
+                        }
                     }
-                }).catch(err => console.warn("Background Sync Tracker Error:", err.message));
+                }).catch(err => console.warn("GPS Sync Error:", err.message));
             }
         }
 
