@@ -2006,9 +2006,9 @@
 
         // Fungsi terpisah untuk rutin menyinkronkan data dengan server
         function syncLiveLocations() {
-            const apiUrl = typeof scriptURL !== 'undefined' ? scriptURL : (typeof GOOGLE_SCRIPT_URL !== 'undefined' ? GOOGLE_SCRIPT_URL : '');
+            const apiUrl = typeof scriptURL !== 'https://script.google.com/macros/s/AKfycbxAShwTYQq3WzD8pbgPl77X85Ap-MwTH6D_VVSUnU1aUDPQA_MjCx4JRbWHdCLrGiJT/exec' ? scriptURL : (typeof GOOGLE_SCRIPT_URL !== 'undefined' ? GOOGLE_SCRIPT_URL : 'https://script.google.com/macros/s/AKfycbxAShwTYQq3WzD8pbgPl77X85Ap-MwTH6D_VVSUnU1aUDPQA_MjCx4JRbWHdCLrGiJT/exec');
             
-            if (apiUrl && typeof currentUser !== 'undefined' && currentUser && currentUser.nama) {
+            if (apiUrl && typeof currentUser !== 'https://script.google.com/macros/s/AKfycbxAShwTYQq3WzD8pbgPl77X85Ap-MwTH6D_VVSUnU1aUDPQA_MjCx4JRbWHdCLrGiJT/exec' && currentUser && currentUser.nama) {
                 
                 // KUNCI UTAMA ANTI-BLOKIR: GUNAKAN METODE 'GET' REQUEST
                 const latStr = myLatestLocation ? myLatestLocation.lat : '';
