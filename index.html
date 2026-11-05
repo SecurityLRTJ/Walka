@@ -2032,38 +2032,36 @@
             }
         }
 
-        // Nyalakan pemantau satelit & Sinkronisasi
-        function startLiveTracking() {
-            if (!navigator.geolocation) {
-                console.warn("GPS Tidak Didukung di perangkat ini.");
-                return;
+        // Fitur Interval Pembaruan Lokasi (Setiap 5 detik untuk Menu Maps)
+            let gpsIntervalId = null;
+            function startLiveTracking(initialLat, initialLng) {
+                // Tarikan koordinat pertama saat login
+                callBackend('updateLocation', {
+                    nama: currentUser.name,
+                    regu: currentUser.regu,
+                    lat: initialLat,
+                    lng: initialLng
+                });
+            
+                // Looping di background tiap 5 detik
+                if (gpsIntervalId) clearInterval(gpsIntervalId);
+                gpsIntervalId = setInterval(() => {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition((pos) => {
+                            callBackend('updateLocation', {
+                                nama: currentUser.name,
+                                regu: currentUser.regu,
+                                lat: pos.coords.latitude,
+                                lng: pos.coords.longitude
+                            }).then(res => {
+                                // Opsional: Jika Menu Maps sudah disiapkan untuk me-render Marker
+                                // renderMapMarkers(res.data);
+                            });
+                        }, (err) => console.warn('Update lokasi ditolak/gagal:', err.message), 
+                        { enableHighAccuracy: true });
+                    }
+                }, 5000);
             }
-
-            // Pemantauan Lokasi (Hanya menyimpan koordinat terbaru ke dalam variabel)
-            navigator.geolocation.watchPosition(
-                (position) => {
-                    myLatestLocation = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    // Kirim seketika saat posisi bergeser
-                    syncLiveLocations(); 
-                },
-                (error) => { console.warn("GPS Error:", error.message); },
-                { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
-            );
-
-            // PING SERVER RUTIN: Tarik lokasi teman setiap 5 detik meskipun kita sedang diam
-            setInterval(syncLiveLocations, 5000);
-        }
-
-        // Trigger Otomatis: Mulai melacak saat petugas berhasil login
-        setInterval(() => {
-            if (typeof currentUser !== 'undefined' && currentUser !== null && !liveTrackingStarted) {
-                liveTrackingStarted = true;
-                startLiveTracking();
-            }
-        }, 3000);
 
         // --- GENERATE 23 DATA PERSONIL WALKA (Regu 1, Regu 2, Regu 3, Management) ---
         function generateInitialPetugasList() {
@@ -2450,39 +2448,71 @@
         }
 
             function handleLogin(e) {
-                e.preventDefault();
-                const email = document.getElementById('loginUsername').value.trim();
-                const pass = document.getElementById('loginPassword').value.trim();
+            e.preventDefault();
+            const email = document.getElementById('loginUsername').value.trim();
+            const pass = document.getElementById('loginPassword').value.trim();
+            
+            // Pencarian data user di sistem berdasarkan input Email dan Password
+            const matchedOfficer = dataPetugasList.find(p => p.email.toLowerCase() === email.toLowerCase() && p.password === pass);
+        
+            if (matchedOfficer) {
+                showToast('Otentikasi berhasil, memuat lokasi GPS Anda...', 'info');
                 
-                const matchedOfficer = dataPetugasList.find(p => p.email.toLowerCase() === email.toLowerCase() && p.password === pass);
-            
-                if (matchedOfficer) {
-                    currentUser = {
-                        name: matchedOfficer.nama,
-                        id: matchedOfficer.noId,
-                        regu: matchedOfficer.regu || 'Regu 1',
-                        jabatan: matchedOfficer.jabatan,
-                        photo: matchedOfficer.foto,
-                        banner: matchedOfficer.banner || DEFAULT_BANNER_URL,
-                        lrv: 'LRV-01',
-                        shift: 'P1'
-                    };
-                    localStorage.setItem('walkaUser', JSON.stringify(currentUser));
-                    
-                    // --- TAMBAHKAN BARIS INI UNTUK MENCATAT RIWAYAT LOGIN ---
-                    callBackend('riwayatLogin', {
-                        nama: currentUser.name,
-                        noId: currentUser.id,
-                        regu: currentUser.regu,
-                        jabatan: currentUser.jabatan
-                    });
-                    // --------------------------------------------------------
-            
-                    enterApplication(`Selamat bertugas, ${currentUser.name}!`);
+                // Meminta titik koordinat GPS seketika saat Login
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            finishLogin(matchedOfficer, lat, lng);
+                        },
+                        (error) => {
+                            showToast('Gagal memuat GPS. Pastikan izin lokasi (Location) aktif.', 'error');
+                            // Tetap lanjutkan login meskipun GPS gagal diakses
+                            finishLogin(matchedOfficer, null, null);
+                        },
+                        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+                    );
                 } else {
-                    showToast('Gagal! Email atau Password salah.', 'error');
+                    finishLogin(matchedOfficer, null, null);
                 }
+            } else {
+                showToast('Gagal! Email atau Password salah.', 'error');
             }
+        }
+
+            // Fungsi Lanjutan Setelah Autentikasi dan GPS didapatkan
+            async function finishLogin(matchedOfficer, lat, lng) {
+                currentUser = {
+                    name: matchedOfficer.nama,
+                    id: matchedOfficer.noId,
+                    jabatan: matchedOfficer.jabatan,
+                    photo: matchedOfficer.foto,
+                    regu: matchedOfficer.regu || 'Regu 1', // fallback regu
+                    lrv: 'LRV-01',
+                    shift: 'P1'
+                };
+
+                // Simpan sesi login ke LocalStorage Browser
+                localStorage.setItem('walkaUser', JSON.stringify(currentUser));
+                
+                // 1. Catat Riwayat Login + GPS ke Backend (Sheet RiwayatLogin)
+                callBackend('riwayatLogin', {
+                    nama: currentUser.name,
+                    noId: currentUser.id,
+                    regu: currentUser.regu,
+                    jabatan: currentUser.jabatan,
+                    lat: lat,
+                    lng: lng
+                });
+            
+                // 2. Langsung hidupkan Live Tracking untuk Menu Maps
+                if (lat && lng) {
+                    startLiveTracking(lat, lng);
+                }
+            
+                enterApplication(`Selamat bertugas, ${currentUser.name}!`);
+                        }
 
         async function handleRegister(e) {
             e.preventDefault();
@@ -4138,19 +4168,27 @@ Demikian Laporan Checklist Keberangkatan Kereta Pertama yang beroperasi hari ini
         }
 
         window.onload = function() {
-            initDefaultDates();
-            initScheduleData();
-            renderCalendar();
-            renderAllTables();
-            
-            if (currentUser) {
-                enterApplication(`Selamat datang kembali, ${currentUser.name}!`);
-                navigateView('maps');
-            }
-
-            // Otomatis tarik data real dari Google Spreadsheet saat aplikasi dibuka
-            forceSync(true);
-        };
+    initDefaultDates();
+    initScheduleData();
+    renderCalendar();
+    renderAllTables();
+    initMacDock();
+    
+    // Cek jika pengguna sudah memiliki sesi login aktif di browser
+    if (currentUser) {
+        // Nyalakan ulang tracker untuk Menu Maps
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                startLiveTracking(pos.coords.latitude, pos.coords.longitude);
+            }, () => {}, { enableHighAccuracy: true });
+        }
+        
+        enterApplication(`Selamat datang kembali, ${currentUser.name}!`);
+        setTimeout(() => {
+            navigateView('form-patroli');
+        }, 100);
+    }
+};
     </script>
 </body>
 </html>
