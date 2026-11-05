@@ -1952,6 +1952,7 @@
         // ==========================================
         let liveUserMarkers = {};
         let liveTrackingStarted = false;
+        let myLatestLocation = null; // Menyimpan lokasi terakhir kita
 
         // Tentukan warna marker berdasakan Regu
         function getReguColor(regu) {
@@ -1986,7 +1987,7 @@
                     });
 
                     // Taruh pin di peta
-                    let marker = L.marker([loc.lat, loc.lng], {icon: divIcon})
+                    let marker = L.marker([loc.lat, loc.lng], {icon: divIcon, zIndexOffset: 1000})
                       .bindPopup(`<b>${nama}</b><br/><span style="color: ${getReguColor(loc.regu)}; font-weight: 600;">${loc.regu}</span>`)
                       .addTo(map);
                       
@@ -2003,6 +2004,38 @@
             }
         }
 
+        // Fungsi terpisah untuk rutin menyinkronkan data dengan server
+        function syncLiveLocations() {
+            const apiUrl = typeof scriptURL !== 'undefined' ? scriptURL : (typeof GOOGLE_SCRIPT_URL !== 'undefined' ? GOOGLE_SCRIPT_URL : '');
+            
+            if (apiUrl && currentUser && currentUser.nama) {
+                let payloadData = {
+                    nama: currentUser.nama,
+                    regu: currentUser.regu
+                };
+                
+                // Jika sudah ada koordinat GPS, sisipkan ke dalam data
+                if (myLatestLocation) {
+                    payloadData.lat = myLatestLocation.lat;
+                    payloadData.lng = myLatestLocation.lng;
+                }
+
+                fetch(apiUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'updateLocation',
+                        data: payloadData
+                    })
+                })
+                .then(response => response.json())
+                .then(res => {
+                    if (res.status === 'success' && res.data) {
+                        renderLiveUsers(res.data);
+                    }
+                }).catch(err => console.warn("Background Sync Tracker Error:", err.message));
+            }
+        }
+
         // Nyalakan pemantau satelit & Sinkronisasi
         function startLiveTracking() {
             if (!navigator.geolocation) {
@@ -2010,43 +2043,25 @@
                 return;
             }
 
-            // Pemantauan Lokasi Real-Time berjalan di background
+            // Pemantauan Lokasi (Hanya menyimpan koordinat terbaru ke dalam variabel)
             navigator.geolocation.watchPosition(
                 (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    
-                    // Deteksi URL API dari kodingan form Anda (biasanya bernama scriptURL atau GOOGLE_SCRIPT_URL)
-                    const apiUrl = typeof scriptURL !== 'undefined' ? scriptURL : (typeof GOOGLE_SCRIPT_URL !== 'undefined' ? GOOGLE_SCRIPT_URL : '');
-                    
-                    if(apiUrl && currentUser && currentUser.nama) {
-                        fetch(apiUrl, {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                action: 'updateLocation',
-                                data: {
-                                    nama: currentUser.nama,
-                                    regu: currentUser.regu,
-                                    lat: lat,
-                                    lng: lng
-                                }
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(res => {
-                            if (res.status === 'success' && res.data) {
-                                renderLiveUsers(res.data);
-                            }
-                        }).catch(err => console.warn("Background Sync Tracker:", err.message));
-                    }
+                    myLatestLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    // Kirim seketika saat posisi bergeser
+                    syncLiveLocations(); 
                 },
                 (error) => { console.warn("GPS Error:", error.message); },
                 { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
             );
+
+            // PING SERVER RUTIN: Tarik lokasi teman setiap 5 detik meskipun kita sedang diam
+            setInterval(syncLiveLocations, 5000);
         }
 
-        // Trigger Otomatis: Aplikasi akan rutin mengecek setiap 3 detik. 
-        // Jika petugas sudah lolos login (currentUser ada), GPS Tracker diaktifkan.
+        // Trigger Otomatis: Mulai melacak saat petugas berhasil login
         setInterval(() => {
             if (typeof currentUser !== 'undefined' && currentUser !== null && !liveTrackingStarted) {
                 liveTrackingStarted = true;
