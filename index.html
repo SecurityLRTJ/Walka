@@ -1907,7 +1907,7 @@
     <!-- ==================== JAVASCRIPT LOGIC ==================== -->
     <script>
         const DEFAULT_BANNER_URL = 'https://cms.disway.id/uploads/fbb013a3f898a7d5855f9b8111afc573.jpg';
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxZ8Z0QTGHm7SKDMGH6iBGJ64oNi13T3D7I-ELbICP6YmclLi8yzabJhrQ9Fl_nMlqT/exec';
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxAShwTYQq3WzD8pbgPl77X85Ap-MwTH6D_VVSUnU1aUDPQA_MjCx4JRbWHdCLrGiJT/exec';
         const GOOGLE_MAPS_API_KEY = 'AIzaSyCmgH8T5ozB4shDUnsGIWmCqxcm2h94ok8';
         const Aplikasi_Walka = '18Zd94vnpEWNv1ScTvYZD07gwbZUVQiGb';
 
@@ -1936,134 +1936,164 @@
             }
             
             // 4. Tangkap ID File unik dari URL Google Drive (mencakup SEMUA format URL)
-            const driveIdMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-            
-            if (driveIdMatch && driveIdMatch[1]) {
-                // 5. MENGGUNAKAN JALUR THUMBNAIL DENGAN PARAMETER sz=s0 (SIZE ORIGINAL)
-                // Ini akan diizinkan 100% oleh Google dan ukuran foto tetap jernih/asli
-                return `https://drive.google.com/thumbnail?id=${driveIdMatch[1]}&sz=s0`;
-            }
-            
-            return url;
+        const driveIdMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        
+        if (driveIdMatch && driveIdMatch[1]) {
+            // 5. MENGGUNAKAN JALUR THUMBNAIL DENGAN PARAMETER sz=s0 (SIZE ORIGINAL)
+            // Ini akan diizinkan 100% oleh Google dan ukuran foto tetap jernih/asli
+            return `https://drive.google.com/thumbnail?id=${driveIdMatch[1]}&sz=s0`;
         }
+        
+        return url;
+    }
 
-        // ==========================================
-        // FITUR LIVE TRACKING GPS ANTAR ANGGOTA
-        // ==========================================
-        let liveUserMarkers = {};
-        let liveTrackingStarted = false;
-        let myLatestLocation = null; // Menyimpan lokasi terakhir kita
+    // ==========================================
+    // FITUR LIVE TRACKING GPS ANTAR ANGGOTA (DIPERBAIKI)
+    // ==========================================
+    let liveUserMarkers = {};
+    let liveTrackingStarted = false;
+    let myLatestLocation = null;
+    let watchPositionId = null;
 
-        // Tentukan warna marker berdasakan Regu
-        function getReguColor(regu) {
-            regu = (regu || "").toLowerCase();
-            if(regu.includes('1')) return '#075985'; // Biru (Regu 1)
-            if(regu.includes('2')) return '#065f46'; // Hijau (Regu 2)
-            if(regu.includes('3')) return '#92400e'; // Oranye (Regu 3)
-            if(regu.includes('management')) return '#3730a3'; // Ungu (Management)
-            return '#0f172a'; // Hitam (Default)
-        }
+    // Tentukan warna marker berdasakan Regu
+    function getReguColor(regu) {
+        regu = (regu || "").toLowerCase();
+        if(regu.includes('1')) return '#075985'; // Biru (Regu 1)
+        if(regu.includes('2')) return '#065f46'; // Hijau (Regu 2)
+        if(regu.includes('3')) return '#92400e'; // Oranye (Regu 3)
+        if(regu.includes('management')) return '#3730a3'; // Ungu
+        return '#0f172a'; // Hitam (Default)
+    }
 
-        // Render anggota lain ke Map
-        function renderLiveUsers(locations) {
-            if (typeof map === 'undefined' || !map) return; // Pastikan Peta Leaflet sudah dimuat
+    // Render anggota lain ke Map
+    function renderLiveUsers(locations) {
+        if (!mapInstance) return; // FIX: Menggunakan mapInstance, bukan map
 
-            for (let nama in locations) {
-                let loc = locations[nama];
+        for (let nama in locations) {
+            let loc = locations[nama];
+            
+            // FIX: Jangan render pin server untuk diri sendiri, karena sudah ada pin kita sendiri
+            if (currentUser && nama === currentUser.name) continue;
+            
+            if (liveUserMarkers[nama]) {
+                liveUserMarkers[nama].setLatLng([loc.lat, loc.lng]);
+            } else {
+                const iconHtml = `<div style="background-color: ${getReguColor(loc.regu)}; width: 35px; height: 35px; border-radius: 50%; border: 3px solid white; display: flex; justify-content: center; align-items: center; color: white; font-size: 14px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.5);">${nama.charAt(0).toUpperCase()}</div>`;
+                const divIcon = L.divIcon({ html: iconHtml, className: '', iconSize: [35, 35], iconAnchor: [17, 17], popupAnchor: [0, -17] });
                 
-                if (liveUserMarkers[nama]) {
-                    // Update posisi marker jika user sudah bergerak
-                    liveUserMarkers[nama].setLatLng([loc.lat, loc.lng]);
-                } else {
-                    // Buat marker custom elegan (Bulat dengan huruf pertama Nama)
-                    const iconHtml = `<div style="background-color: ${getReguColor(loc.regu)}; width: 35px; height: 35px; border-radius: 50%; border: 3px solid white; display: flex; justify-content: center; align-items: center; color: white; font-size: 14px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.5);">${nama.charAt(0).toUpperCase()}</div>`;
-                    
-                    const divIcon = L.divIcon({
-                        html: iconHtml,
-                        className: '',
-                        iconSize: [35, 35],
-                        iconAnchor: [17, 17],
-                        popupAnchor: [0, -17]
-                    });
+                let marker = L.marker([loc.lat, loc.lng], {icon: divIcon, zIndexOffset: 1000})
+                    .bindPopup(`<b>${nama}</b><br/><span style="color: ${getReguColor(loc.regu)}; font-weight: 600;">${loc.regu}</span>`)
+                    .addTo(mapInstance); // FIX: Gunakan mapInstance
+                  
+                liveUserMarkers[nama] = marker;
+            }
+        }
+        
+        // Hapus pin dari peta untuk petugas yang sudah offline
+        for (let nama in liveUserMarkers) {
+            if (!locations[nama] || (currentUser && nama === currentUser.name)) {
+                mapInstance.removeLayer(liveUserMarkers[nama]); // FIX: Gunakan mapInstance
+                delete liveUserMarkers[nama];
+            }
+        }
+    }
 
-                    // Taruh pin di peta
-                    let marker = L.marker([loc.lat, loc.lng], {icon: divIcon, zIndexOffset: 1000})
-                      .bindPopup(`<b>${nama}</b><br/><span style="color: ${getReguColor(loc.regu)}; font-weight: 600;">${loc.regu}</span>`)
-                      .addTo(map);
-                      
-                    liveUserMarkers[nama] = marker;
+    // Sinkronisasi data ke satelit Google Sheet (GET request anti blokir)
+    function syncLiveLocations() {
+        // FIX: Gunakan GAS_WEB_APP_URL dan pastikan memanggil currentUser.name
+        if (typeof GAS_WEB_APP_URL !== 'undefined' && GAS_WEB_APP_URL && currentUser && currentUser.name) {
+            
+            const latStr = myLatestLocation ? myLatestLocation.lat : '';
+            const lngStr = myLatestLocation ? myLatestLocation.lng : '';
+            
+            const fetchUrl = `${GAS_WEB_APP_URL}?action=updateLocation&nama=${encodeURIComponent(currentUser.name)}&regu=${encodeURIComponent(currentUser.regu)}&lat=${latStr}&lng=${lngStr}`;
+
+            fetch(fetchUrl)
+            .then(response => response.json())
+            .then(res => {
+                if (res.status === 'success' && res.data) {
+                    renderLiveUsers(res.data);
                 }
-            }
-            
-            // Hapus pin dari peta untuk petugas yang sudah offline/logout
-            for (let nama in liveUserMarkers) {
-                if (!locations[nama]) {
-                    map.removeLayer(liveUserMarkers[nama]);
-                    delete liveUserMarkers[nama];
-                }
-            }
+            }).catch(err => console.warn("GPS Sync Error:", err.message));
+        }
+    }
+
+    function updateUserGpsMarker(lat, lng) {
+        lastKnownUserLat = lat;
+        lastKnownUserLng = lng;         
+        myLatestLocation = { lat: lat, lng: lng }; 
+        
+        if (!mapInstance) return;
+
+        const userPhoto = currentUser && currentUser.photo
+            ? extractImageUrl(currentUser.photo)
+            : 'https://placehold.co/100x100/10b981/ffffff?text=WK';
+        const userName = currentUser ? currentUser.name : 'Petugas Walka';
+        const userJabatan = currentUser ? `${currentUser.jabatan} (${currentUser.regu || 'Walka'})` : 'Aktif';
+
+        const gpsAvatarIcon = L.divIcon({
+            className: 'custom-gps-avatar',
+            html: `
+                <div class="gps-user-avatar" style="width: 44px; height: 44px; border-radius: 9999px; border: 3px solid #10b981; background: #ffffff; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.45);">
+                    <img src="${userPhoto}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 9999px;" onerror="this.src='https://placehold.co/100x100/10b981/ffffff?text=WK'">
+                </div>
+            `,
+            iconSize: [44, 44],
+            iconAnchor: [22, 22],
+            popupAnchor: [0, -22]
+        });
+
+        const popupContent = `
+            <div style="text-align: center; min-width: 150px; padding: 2px;">
+                <div style="font-size: 10px; font-weight: 800; color: #10b981; text-transform: uppercase;">● Navigasi GPS Aktif</div>
+                <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-top: 2px;">${userName}</div>
+                <div style="font-size: 11px; color: #64748b;">${userJabatan}</div>
+                <div style="font-size: 10px; font-family: monospace; color: #94a3b8; margin-top: 4px;">${lat.toFixed(6)}, ${lng.toFixed(6)}</div>
+            </div>
+        `;
+
+        if (userGpsMarker) {
+            userGpsMarker.setLatLng([lat, lng]);
+            userGpsMarker.setIcon(gpsAvatarIcon);
+            userGpsMarker.setPopupContent(popupContent);
+        } else {
+            userGpsMarker = L.marker([lat, lng], { icon: gpsAvatarIcon, zIndexOffset: 1000 })
+                .addTo(mapInstance)
+                .bindPopup(popupContent);
+        }
+        
+        if (liveTrackingStarted) {
+            syncLiveLocations();
+        }
+    }
+
+    function startLiveGpsTracking() {
+        if (!navigator.geolocation) {
+            console.warn("GPS Tidak Didukung di perangkat ini.");
+            return;
+        }
+        if (watchPositionId !== null) {
+            navigator.geolocation.clearWatch(watchPositionId);
         }
 
-        // Fungsi terpisah untuk rutin menyinkronkan data dengan server
-        function syncLiveLocations() {
-            const apiUrl = typeof scriptURL !== 'undefined' ? scriptURL : (typeof GOOGLE_SCRIPT_URL !== 'undefined' ? GOOGLE_SCRIPT_URL : '');
-            
-            if (apiUrl && typeof currentUser !== 'undefined' && currentUser && currentUser.nama) {
-                
-                // KUNCI UTAMA ANTI-BLOKIR: GUNAKAN METODE 'GET' REQUEST
-                const latStr = myLatestLocation ? myLatestLocation.lat : '';
-                const lngStr = myLatestLocation ? myLatestLocation.lng : '';
-                
-                // Susun URL untuk menembus blokir keamanan browser (CORS)
-                const fetchUrl = `${apiUrl}?action=updateLocation&nama=${encodeURIComponent(currentUser.nama)}&regu=${encodeURIComponent(currentUser.regu)}&lat=${latStr}&lng=${lngStr}`;
+        navigator.geolocation.getCurrentPosition(
+            (pos) => { updateUserGpsMarker(pos.coords.latitude, pos.coords.longitude); },
+            () => {},
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
 
-                fetch(fetchUrl)
-                .then(response => response.json())
-                .then(res => {
-                    if (res.status === 'success' && res.data) {
-                        // Pastikan Peta Leaflet (map) sudah aktif
-                        if (typeof map !== 'undefined' && map) {
-                            renderLiveUsers(res.data);
-                        } else {
-                            console.warn("Peta Leaflet 'map' belum siap.");
-                        }
-                    }
-                }).catch(err => console.warn("GPS Sync Error:", err.message));
-            }
+        watchPositionId = navigator.geolocation.watchPosition(
+            (pos) => { updateUserGpsMarker(pos.coords.latitude, pos.coords.longitude); },
+            () => {},
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+        );
+
+        if (!liveTrackingStarted) {
+            liveTrackingStarted = true;
+            setInterval(syncLiveLocations, 2500); // 2.5 Detik Sekali
         }
+    }
 
-        // Nyalakan pemantau satelit & Sinkronisasi
-        function startLiveTracking() {
-            if (!navigator.geolocation) {
-                console.warn("GPS Tidak Didukung di perangkat ini.");
-                return;
-            }
-
-            // Pemantauan Lokasi (Hanya menyimpan koordinat terbaru ke dalam variabel)
-            navigator.geolocation.watchPosition(
-                (position) => {
-                    myLatestLocation = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    // Kirim seketika saat posisi bergeser
-                    syncLiveLocations(); 
-                },
-                (error) => { console.warn("GPS Error:", error.message); },
-                { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
-            );
-
-            // PING SERVER RUTIN: Tarik lokasi teman setiap 5 detik meskipun kita sedang diam
-            setInterval(syncLiveLocations, 5000);
-        }
-
-        // Trigger Otomatis: Mulai melacak saat petugas berhasil login
-        setInterval(() => {
-            if (typeof currentUser !== 'undefined' && currentUser !== null && !liveTrackingStarted) {
-                liveTrackingStarted = true;
-                startLiveTracking();
-            }
-        }, 3000);
 
         // --- GENERATE 23 DATA PERSONIL WALKA (Regu 1, Regu 2, Regu 3, Management) ---
         function generateInitialPetugasList() {
