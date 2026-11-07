@@ -665,6 +665,22 @@
                                     </div>
                                 </div>
                                 <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Shift</label>
+                                    <select id="kejShift" required onchange="handleShiftChange('kej')" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none bg-white font-semibold cursor-pointer appearance-none">
+                                        <option value="" disabled selected>Pilih Shift</option>
+                                        <option value="1">Shift 1 (Pagi)</option>
+                                        <option value="2">Shift 2 (Siang)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Regu</label>
+                                    <input type="text" id="kejRegu" required readonly class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-50 font-bold text-slate-700">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Jam Dinas</label>
+                                    <input type="text" id="kejJamDinas" required readonly placeholder="00:00 - 00:00" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-50 font-bold text-rose-700">
+                                </div>
+                                <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1">Lokasi Kejadian</label>
                                     <input type="text" id="kejLokasi" required placeholder="Contoh: Stasiun Kelapa Gading" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none">
                                 </div>
@@ -677,7 +693,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1">Nama Walka</label>
-                                    <input type="text" id="kejPetugas" required class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-rose-600 outline-none">
+                                    <input type="text" id="kejPetugas" required readonly class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-50 focus:border-rose-600 outline-none">
                                 </div>
                             </div>
 
@@ -765,7 +781,23 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1">Jam</label>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Shift</label>
+                                    <select id="pnpShift" required onchange="handleShiftChange('pnp')" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-sky-600 outline-none bg-white font-semibold cursor-pointer appearance-none">
+                                        <option value="" disabled selected>Pilih Shift</option>
+                                        <option value="1">Shift 1 (Pagi)</option>
+                                        <option value="2">Shift 2 (Siang)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Regu</label>
+                                    <input type="text" id="pnpRegu" required readonly class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-50 font-bold text-slate-700">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Jam Dinas</label>
+                                    <input type="text" id="pnpJamDinas" required readonly placeholder="00:00 - 00:00" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-50 font-bold text-sky-700">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Jam Laporan</label>
                                     <div class="relative">
                                         <input type="text" id="pnpJam" required class="w-full pr-10 pl-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-sky-600 outline-none bg-white cursor-pointer" placeholder="Pilih Jam">
                                         <i class="fa-regular fa-clock absolute right-3.5 top-3 text-slate-400 pointer-events-none"></i>
@@ -794,7 +826,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1">Nama Walka</label>
-                                    <input type="text" id="pnpNamaWalka" required placeholder="Nama Petugas Walka" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:border-sky-600 outline-none">
+                                    <input type="text" id="pnpNamaWalka" required readonly class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-50 focus:border-sky-600 outline-none">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1">Jumlah PNP (Orang)</label>
@@ -843,21 +875,11 @@
                                 <thead class="bg-slate-200 text-slate-700 uppercase text-[11px]">
                                     <tr>
                                         <th class="p-3 whitespace-nowrap">Hari/Tgl</th>
-                                        <th class="p-3">Shift</th>
                                         <th class="p-3">Jam</th>
                                         <th class="p-3 whitespace-nowrap">No LRV</th>
-                                        <th class="p-3">ASP</th>
+                                        <th class="p-3">Masinis</th>
                                         <th class="p-3">Walka</th>
-                                        <th class="p-3">HT</th>
-                                        <th class="p-3 whitespace-nowrap">Suhu A/B</th>
-                                        <th class="p-3">Announcer</th>
-                                        <th class="p-3">PID</th>
-                                        <th class="p-3">DRM</th>
-                                        <th class="p-3">Tangga</th>
-                                        <th class="p-3 whitespace-nowrap">Box Emg</th>
-                                        <th class="p-3">APAR</th>
-                                        <th class="p-3">Interkom</th>
-                                        <th class="p-3">Keterangan</th>
+                                        <th class="p-3">Kode HT</th>
                                         <th class="p-3 text-center">Aksi</th>
                                     </tr>
                                 </thead>
@@ -1362,7 +1384,7 @@
 
         function updateProfileUI() {
             if (!currentUser) return;
-            const photoUrl = extractImageUrl(currentUser.photo) || 'https://placehold.co/160x160/9f1239/ffffff?text=WK';
+            const photoUrl = extractImageUrl(currentUser.photo || 'https://placehold.co/160x160/9f1239/ffffff?text=WK');
             const bannerUrl = currentUser.banner ? extractImageUrl(currentUser.banner) : DEFAULT_BANNER_URL;
             document.querySelectorAll('#sidebarProfilePhoto, #dockProfileImg, #mobileProfilePhoto').forEach(el => {
                 if(el) el.src = photoUrl;
@@ -1376,6 +1398,52 @@
             if(mobName) mobName.textContent = currentUser.name;
             const mobJabatan = document.getElementById('mobileUserJabatan');
             if(mobJabatan) mobJabatan.textContent = currentUser.jabatan;
+
+            autoFillForms(); // Call auto-fill logic whenever UI is updated
+        }
+
+        function autoFillForms() {
+            if (!currentUser) return;
+            
+            const currentHour = new Date().getHours();
+            const shiftVal = (currentHour >= 5 && currentHour < 14) ? '1' : '2';
+            const jamDinasVal = shiftVal === '1' ? '05:00 - 14:00' : '14:00 - 23:00';
+            const userRegu = currentUser.regu || 'Regu 1';
+
+            // Form Patroli (Keberangkatan)
+            const pWalka = document.getElementById('patNamaWalka');
+            if(pWalka) { pWalka.value = currentUser.name; pWalka.readOnly = true; pWalka.classList.add('bg-slate-50'); }
+            if (document.getElementById('patRegu')) document.getElementById('patRegu').value = userRegu;
+            if (document.getElementById('patShift')) document.getElementById('patShift').value = shiftVal;
+            if (document.getElementById('patJamDinas')) document.getElementById('patJamDinas').value = jamDinasVal;
+            
+            // Form Kejadian
+            const kWalka = document.getElementById('kejPetugas');
+            if(kWalka) { kWalka.value = currentUser.name; kWalka.readOnly = true; kWalka.classList.add('bg-slate-50'); }
+            if (document.getElementById('kejRegu')) document.getElementById('kejRegu').value = userRegu;
+            if (document.getElementById('kejShift')) document.getElementById('kejShift').value = shiftVal;
+            if (document.getElementById('kejJamDinas')) document.getElementById('kejJamDinas').value = jamDinasVal;
+
+            // Form PNP
+            const pnpWalka = document.getElementById('pnpNamaWalka');
+            if(pnpWalka) { pnpWalka.value = currentUser.name; pnpWalka.readOnly = true; pnpWalka.classList.add('bg-slate-50'); }
+            if (document.getElementById('pnpRegu')) document.getElementById('pnpRegu').value = userRegu;
+            if (document.getElementById('pnpShift')) document.getElementById('pnpShift').value = shiftVal;
+            if (document.getElementById('pnpJamDinas')) document.getElementById('pnpJamDinas').value = jamDinasVal;
+        }
+
+        function handleShiftChange(prefix = 'pat') {
+            const shiftVal = document.getElementById(prefix + 'Shift').value;
+            const jamDinas = document.getElementById(prefix + 'JamDinas');
+            if (jamDinas) {
+                if (shiftVal === '1') {
+                    jamDinas.value = '05:00 - 14:00';
+                } else if (shiftVal === '2') {
+                    jamDinas.value = '14:00 - 23:00';
+                } else {
+                    jamDinas.value = '';
+                }
+            }
         }
 
         function enterApplication(msg) {
@@ -1680,15 +1748,57 @@
                 </div>
             `;
 
+            let finalIcon = gpsAvatarIcon;
+            let finalPopup = popupContent;
+
+            // Cek apakah ada keberangkatan LRT aktif untuk user saat ini di hari yang sama
+            const todayStr = flatpickr.formatDate(new Date(), "d/m/Y");
+            const activeKeberangkatan = dataPatroliList.find(p => p.namaWalka === userName && p.hariTgl === todayStr);
+
+            if (activeKeberangkatan) {
+                const lrvNum = activeKeberangkatan.noLrv;
+                const trainIconHtml = `
+                    <div class="gps-user-avatar" style="width: 54px; height: 54px; border-radius: 12px; border: 3px solid #f97316; background: #ffffff; overflow: hidden; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.55); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-train-subway text-rose-600 text-[20px]"></i>
+                        <span style="font-size: 10px; font-weight: 900; color: #0f172a; margin-top: 2px; letter-spacing: -0.5px;">${lrvNum}</span>
+                    </div>
+                `;
+                finalIcon = L.divIcon({
+                    className: 'custom-train-avatar',
+                    html: trainIconHtml,
+                    iconSize: [54, 54], iconAnchor: [27, 27], popupAnchor: [0, -27]
+                });
+                
+                finalPopup = `
+                    <div style="text-align: center; min-width: 170px; padding: 4px;">
+                        <div style="font-size: 11px; font-weight: 800; color: #f97316; text-transform: uppercase;">● Sedang Mengawal ${lrvNum}</div>
+                        <div style="font-size: 14px; font-weight: 900; color: #0f172a; margin-top: 2px;">${userName}</div>
+                        <div style="font-size: 11px; color: #64748b; font-weight: bold;">Shift ${activeKeberangkatan.shift === '1' ? 'Pagi' : 'Siang'} (${activeKeberangkatan.jamDinas})</div>
+                        <button onclick="showActiveDetailPatroli()" style="margin-top: 10px; padding: 6px 10px; background: #e11d48; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 2px 5px rgba(225,29,72,0.4);">
+                            <i class="fa-solid fa-clipboard-list mr-1"></i> Detail Laporan
+                        </button>
+                    </div>
+                `;
+            }
+
             if (userGpsMarker) {
                 userGpsMarker.setLatLng([lat, lng]);
-                userGpsMarker.setIcon(gpsAvatarIcon);
-                userGpsMarker.setPopupContent(popupContent);
+                userGpsMarker.setIcon(finalIcon);
+                userGpsMarker.setPopupContent(finalPopup);
             } else {
-                userGpsMarker = L.marker([lat, lng], { icon: gpsAvatarIcon, zIndexOffset: 1000 })
+                userGpsMarker = L.marker([lat, lng], { icon: finalIcon, zIndexOffset: 1000 })
                     .addTo(mapInstance)
-                    .bindPopup(popupContent);
+                    .bindPopup(finalPopup);
                 mapInstance.setView([lat, lng], 15);
+            }
+        }
+
+        function showActiveDetailPatroli() {
+            const userName = currentUser ? currentUser.name : '';
+            const todayStr = flatpickr.formatDate(new Date(), "d/m/Y");
+            const idx = dataPatroliList.findIndex(p => p.namaWalka === userName && p.hariTgl === todayStr);
+            if(idx !== -1) {
+                showDetailPatroli(idx);
             }
         }
 
@@ -1998,31 +2108,27 @@
 
         // ---------------- RENDER & LOGIC ----------------
         function renderAllTables() {
-            // Render Patroli
+            // Render Patroli (Tampilan Ringkas)
             let phtml = '';
             dataPatroliList.forEach((d,i) => {
                 phtml += `<tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
                     <td class="p-3 whitespace-nowrap">${d.hariTgl || '-'}</td>
-                    <td class="p-3">${d.shift == '1' ? 'Pagi' : (d.shift == '2' ? 'Siang' : '-')}</td>
-                    <td class="p-3 whitespace-nowrap">${d.jam || '-'}</td>
-                    <td class="p-3 font-bold whitespace-nowrap">${d.noLrv || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.namaAsp || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.namaWalka || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.kodeHt || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.suhuA || '-'}/${d.suhuB || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.announcer || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.pid || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.drm || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.tangga || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.boxEmergency || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.apar || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.interkom || '-'}</td>
-                    <td class="p-3 min-w-[200px] truncate">${d.keterangan || '-'}</td>
-                    <td class="p-3 text-center text-rose-600 font-bold cursor-pointer hover:underline" onclick="deleteItem('patroli', ${i})">Hapus</td>
+                    <td class="p-3 whitespace-nowrap font-mono">${d.jam || '-'}</td>
+                    <td class="p-3 font-extrabold text-rose-700 whitespace-nowrap">${d.noLrv || '-'}</td>
+                    <td class="p-3 whitespace-nowrap font-medium">${d.namaAsp || '-'}</td>
+                    <td class="p-3 whitespace-nowrap font-bold text-slate-800">${d.namaWalka || '-'}</td>
+                    <td class="p-3 whitespace-nowrap font-mono text-slate-500">${d.kodeHt || '-'}</td>
+                    <td class="p-3 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="showDetailPatroli(${i})" class="text-blue-600 hover:underline font-bold text-xs" title="Lihat Detail Penuh">Detail</button>
+                            <span class="text-slate-300">|</span>
+                            <button onclick="deleteItem('patroli', ${i})" class="text-rose-600 hover:underline font-bold text-xs" title="Hapus">Hapus</button>
+                        </div>
+                    </td>
                 </tr>`;
             });
             const tbodyPatroli = document.getElementById('tbodyPatroli');
-            if(tbodyPatroli) { tbodyPatroli.innerHTML = phtml || `<tr><td colspan="17" class="p-4 text-center text-slate-500">Tidak ada data</td></tr>`; }
+            if(tbodyPatroli) { tbodyPatroli.innerHTML = phtml || `<tr><td colspan="7" class="p-4 text-center text-slate-500">Tidak ada data</td></tr>`; }
 
             // Render Kejadian
             let khtml = '';
@@ -2109,19 +2215,66 @@
                 apar: document.getElementById('patApar').value,
                 interkom: document.getElementById('patInterkom').value,
                 keterangan: document.getElementById('patKeterangan').value,
+                fotoPatroli: document.getElementById('prevFotoPatroli').value
             };
             dataPatroliList.unshift(item);
             saveRealDataCache();
+            renderAllTables();
             showToast('Laporan Keberangkatan Disimpan', 'success');
+            
+            // Trigger GPS Maker update so it transforms into a Train Icon
+            if(lastKnownUserLat !== null && lastKnownUserLng !== null) {
+                updateUserGpsMarker(lastKnownUserLat, lastKnownUserLng);
+            }
+            
+            // Format WhatsApp Message
+            const shiftLabel = item.shift === '1' ? 'Pagi' : 'Siang';
+            const reqRegu = item.regu.replace('Regu ', '');
+            const greeting = getWhatsappGreeting(item.jam);
+            const longDate = formatWA_Date(item.hariTgl);
+            const lrvNum = item.noLrv.replace('LRV-', '');
+            
+            const waText = `*${greeting}*
+
+Izin melaporkan checklist patroli Keberangkatan Kereta pertama yang beroperasi hari ini.
+
+\`\`\`Hari/Tanggal :\`\`\` ${longDate}
+\`\`\`Shift      :\`\`\` ${shiftLabel}
+\`\`\`Regu         :\`\`\` ${reqRegu}
+\`\`\`Jam Dinas    :\`\`\` ${item.jamDinas} WIB
+
+*1.* LRV ${lrvNum}
+- *Suhu*
+\`\`\`Cars A  :\`\`\` ${item.suhuA}°
+\`\`\`Cars B  :\`\`\` ${item.suhuB}°
+- *Announcer*            \`\`\`: ${item.announcer}\`\`\`
+- *PID*                          \`\`\`: ${item.pid}\`\`\`
+- *DRM*                        \`\`\`: ${item.drm}\`\`\`
+- *Tangga Darurat*    \`\`\`: ${item.tangga}\`\`\`
+- *Box Emergency*    \`\`\`: ${item.boxEmergency}\`\`\`
+- *Apar*                        \`\`\`: ${item.apar}\`\`\`
+- *Intercom Darurat* \`\`\`: ${item.interkom}\`\`\`
+
+*Keterangan:*
+[Shift ${shiftLabel}, Regu ${reqRegu}] ${item.keterangan}
+
+Demikian Laporan Checklist Keberangkatan Kereta Pertama yang beroperasi hari ini, terimakasih.`;
+
+            window.open('https://wa.me/?text=' + encodeURIComponent(waText), '_blank');
+            
             navigateView('data-patroli');
             document.getElementById('formPatroli').reset();
             initDefaultDates();
+            autoFillForms(); // Refill read-only info
         }
 
         function submitKejadian(e) { 
             e.preventDefault(); 
             const item = {
                 hariTgl: document.getElementById('kejHariTgl').value,
+                shift: document.getElementById('kejShift').value,
+                regu: document.getElementById('kejRegu').value,
+                jamDinas: document.getElementById('kejJamDinas').value,
                 lokasi: document.getElementById('kejLokasi').value,
                 waktu: document.getElementById('kejWaktu').value,
                 petugas: document.getElementById('kejPetugas').value,
@@ -2129,32 +2282,58 @@
                 tindakan: document.getElementById('kejTindakan').value,
                 kerugian: document.getElementById('kejKerugian').value,
                 waktuTindakan: document.getElementById('kejWaktuTindakan').value,
+                fotoKejadian: document.getElementById('prevFotoKejadian').value,
+                fotoTindakan: document.getElementById('prevFotoTindakan').value
             };
             dataKejadianList.unshift(item);
             saveRealDataCache();
+            renderAllTables();
             showToast('Laporan Kejadian Disimpan', 'success');
+            
+            const greeting = getWhatsappGreeting(item.waktu);
+            const longDate = formatWA_Date(item.hariTgl);
+            const shiftLabel = item.shift === '1' ? 'Pagi' : 'Siang';
+            
+            const waText = `*${greeting}*\n\nIzin melaporkan *Kejadian* di area LRT Jakarta.\n\n\`\`\`Hari/Tanggal :\`\`\` ${longDate}\n\`\`\`Waktu        :\`\`\` ${item.waktu} WIB\n\`\`\`Shift        :\`\`\` ${shiftLabel} (${item.jamDinas})\n\`\`\`Lokasi       :\`\`\` ${item.lokasi}\n\`\`\`Petugas      :\`\`\` ${item.petugas}\n\n*Kronologi Kejadian:*\n${item.kronologi}\n\n*Tindakan Dilakukan:*\n${item.tindakan}\n\n*Kerugian:*\n${item.kerugian}\n*Waktu Selesai:* ${item.waktuTindakan} WIB\n\nDemikian laporan kejadian yang dapat disampaikan. Terimakasih.`;
+            window.open('https://wa.me/?text=' + encodeURIComponent(waText), '_blank');
+            
             navigateView('data-kejadian');
             document.getElementById('formKejadian').reset();
             initDefaultDates();
+            autoFillForms();
         }
 
         function submitPnp(e) { 
             e.preventDefault(); 
             const item = {
                 hariTgl: document.getElementById('pnpHariTgl').value,
+                shift: document.getElementById('pnpShift').value,
+                regu: document.getElementById('pnpRegu').value,
+                jamDinas: document.getElementById('pnpJamDinas').value,
                 jam: document.getElementById('pnpJam').value,
                 noLrv: document.getElementById('pnpNoLrv').value,
                 namaAsp: document.getElementById('pnpNamaAsp').value,
                 namaWalka: document.getElementById('pnpNamaWalka').value,
                 jumlah: document.getElementById('pnpJumlah').value,
                 keterangan: document.getElementById('pnpKeterangan').value,
+                fotoPnp: document.getElementById('prevFotoPnp').value
             };
             dataPnpList.unshift(item);
             saveRealDataCache();
+            renderAllTables();
             showToast('Laporan PNP Disimpan', 'success');
+            
+            const greeting = getWhatsappGreeting(item.jam);
+            const longDate = formatWA_Date(item.hariTgl);
+            const shiftLabel = item.shift === '1' ? 'Pagi' : 'Siang';
+            
+            const waText = `*${greeting}*\n\nIzin melaporkan *Jumlah Penumpang (PNP)* yang berada di dalam kereta.\n\n\`\`\`Hari/Tanggal :\`\`\` ${longDate}\n\`\`\`Jam          :\`\`\` ${item.jam} WIB\n\`\`\`Shift        :\`\`\` ${shiftLabel} (${item.jamDinas})\n\`\`\`No LRV       :\`\`\` ${item.noLrv}\n\`\`\`Nama Walka   :\`\`\` ${item.namaWalka}\n\n*Total PNP:* ${item.jumlah} Orang\n\n*Keterangan:*\n${item.keterangan}\n\nDemikian Laporan Jumlah Penumpang. Terimakasih.`;
+            window.open('https://wa.me/?text=' + encodeURIComponent(waText), '_blank');
+            
             navigateView('data-pnp');
             document.getElementById('formPnp').reset();
             initDefaultDates();
+            autoFillForms();
         }
 
         function submitPetugas(e) {
@@ -2181,7 +2360,6 @@
 
         window.onload = function() {
             initDefaultDates();
-            renderAllTables();
             
             if (currentUser) {
                 if (navigator.geolocation) {
@@ -2189,6 +2367,8 @@
                 }
                 enterApplication(`Selamat datang kembali, ${currentUser.name}!`);
                 setTimeout(() => navigateView('maps'), 100);
+            } else {
+                renderAllTables();
             }
         };
     </script>
