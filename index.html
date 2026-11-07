@@ -1349,6 +1349,7 @@
         let dataKejadianList = JSON.parse(localStorage.getItem('walka_real_kejadian')) || [];
         let dataPnpList = JSON.parse(localStorage.getItem('walka_real_pnp')) || [];
         let dataPetugasList = JSON.parse(localStorage.getItem('walka_real_petugas')) || [];
+        let scheduleData = JSON.parse(localStorage.getItem('walka_real_schedule')) || {};
 
         if(dataPetugasList.length === 0) {
             dataPetugasList.push({
@@ -1362,6 +1363,7 @@
             localStorage.setItem('walka_real_kejadian', JSON.stringify(dataKejadianList));
             localStorage.setItem('walka_real_pnp', JSON.stringify(dataPnpList));
             localStorage.setItem('walka_real_petugas', JSON.stringify(dataPetugasList));
+            localStorage.setItem('walka_real_schedule', JSON.stringify(scheduleData));
         }
 
         // ---------------- AUTHENTICATION ----------------
@@ -2278,169 +2280,614 @@
             }
         }
 
-        function toggleNavFootbar() {
-            navFootHidden = !navFootHidden;
-            const header = document.getElementById('mainHeader');
-            const footbar = document.getElementById('mobileFootbarContainer');
-            const sidebar = document.getElementById('sidebar');
-            const icon = document.getElementById('iconToggleNavFoot');
-            
-            if (navFootHidden) {
-                header.classList.add('hidden');
-                footbar.classList.add('hidden');
-                sidebar.classList.replace('lg:flex', 'lg:hidden');
-                icon.classList.replace('fa-expand', 'fa-compress');
-                showToast('Mode Peta Layar Penuh Aktif', 'info');
-            } else {
-                header.classList.remove('hidden');
-                footbar.classList.remove('hidden');
-                sidebar.classList.replace('lg:hidden', 'lg:flex');
-                icon.classList.replace('fa-compress', 'fa-expand');
+        // ---------------- KALENDER SHIFT LOGIC ----------------
+        const shiftCycle = ['P1', 'P2', 'S1', 'S2', 'Off1', 'Off2'];
+
+        function initScheduleData() {
+            const cachedSched = JSON.parse(localStorage.getItem('walka_real_schedule'));
+            if (cachedSched && Object.keys(cachedSched).length > 0) {
+                scheduleData = cachedSched;
+                return;
             }
-            if (mapInstance) {
-                setTimeout(() => mapInstance.invalidateSize(), 200);
+            const groups = ['Regu 1', 'Regu 2', 'Regu 3'];
+            groups.forEach((grp, idx) => {
+                scheduleData[grp] = {};
+                for (let day = 1; day <= 31; day++) {
+                    scheduleData[grp][day] = shiftCycle[(day + idx * 2) % shiftCycle.length];
+                }
+            });
+        }
+
+        function getShiftStyle(code) {
+            const baseCard = 'bg-white border-slate-200 hover:border-slate-300';
+            if (code === 'P1') return { badge: 'P1', label: 'Shift Pagi 1', bg: 'bg-blue-600 text-white', card: baseCard };
+            if (code === 'P2') return { badge: 'P2', label: 'Shift Pagi 2', bg: 'bg-blue-500 text-white', card: baseCard };
+            if (code === 'S1') return { badge: 'S1', label: 'Shift Siang 1', bg: 'bg-orange-500 text-white', card: baseCard };
+            if (code === 'S2') return { badge: 'S2', label: 'Shift Siang 2', bg: 'bg-orange-600 text-white', card: baseCard };
+            return { badge: 'Off', label: 'Off - Libur', bg: 'bg-red-500 text-white', card: baseCard };
+        }
+
+        function renderCalendar() {
+            const personSelect = document.getElementById('calendarPersonSelect');
+            if (!personSelect) return;
+            const person = personSelect.value;
+            const grid = document.getElementById('calendarGrid');
+            if (!grid) return;
+            if (!scheduleData[person]) initScheduleData();
+
+            let html = '';
+            for (let empty = 0; empty < 4; empty++) {
+                html += `<div class="p-2 rounded-xl bg-slate-50 border border-slate-100 opacity-40 min-h-[76px]"></div>`;
+            }
+            for (let day = 1; day <= 31; day++) {
+                const code = scheduleData[person][day];
+                const st = getShiftStyle(code);
+                html += `
+                    <div onclick="cycleDayShift('${person}', ${day})" class="cursor-pointer p-2 rounded-xl border transition select-none flex flex-col justify-between min-h-[76px] ${st.card}">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs sm:text-sm font-extrabold text-slate-700">${day}</span>
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold ${st.bg}">${st.badge}</span>
+                        </div>
+                        <div class="text-left mt-1">
+                            <p class="text-[10px] sm:text-xs font-bold text-slate-700 leading-tight">${st.label}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
+        }
+
+        function cycleDayShift(person, day) {
+            const curr = scheduleData[person][day];
+            const nextIdx = (shiftCycle.indexOf(curr) + 1) % shiftCycle.length;
+            scheduleData[person][day] = shiftCycle[nextIdx];
+            renderCalendar();
+        }
+
+        function randomizeSchedule() {
+            const personSelect = document.getElementById('calendarPersonSelect');
+            if (!personSelect) return;
+            const person = personSelect.value;
+            const offset = Math.floor(Math.random() * 6);
+            for (let day = 1; day <= 31; day++) {
+                scheduleData[person][day] = shiftCycle[(day + offset) % shiftCycle.length];
+            }
+            renderCalendar();
+            showToast(`Siklus shift ${person} diperbarui!`, 'success');
+        }
+
+        async function saveSchedule() {
+            const personSelect = document.getElementById('calendarPersonSelect');
+            if (!personSelect) return;
+            const person = personSelect.value;
+            callBackend('saveSchedule', { person: person, schedule: scheduleData[person] });
+            showToast(`Jadwal shift ${person} berhasil disimpan ke Spreadsheet!`, 'success');
+        }
+
+        // ---------------- GROUPING, CHARTS, & TABLE RENDERER ----------------
+        let chartPatroliInstance = null;
+        let chartKejadianInstance = null;
+        let chartPnpInstance = null;
+
+        function groupBy(array, key) {
+            return array.reduce((result, item) => {
+                const k = item[key] || 'Lainnya';
+                (result[k] = result[k] || []).push(item);
+                return result;
+            }, {});
+        }
+
+        function toggleGroup(type, keyStr) {
+            const safeClass = keyStr.replace(/[^a-zA-Z0-9]/g, '');
+            const rows = document.querySelectorAll(`.child-${type}-${safeClass}`);
+            const icon = document.getElementById(`icon-${type}-${safeClass}`);
+            
+            let isHidden = false;
+            rows.forEach(row => {
+                row.classList.toggle('hidden');
+                isHidden = row.classList.contains('hidden');
+            });
+            
+            if (!window.groupState) window.groupState = { patroli: {}, kejadian: {}, pnp: {}, petugas: {} };
+            if (!window.groupState[type]) window.groupState[type] = {};
+            window.groupState[type][safeClass] = !isHidden;
+            
+            if (icon) {
+                if (isHidden) icon.classList.remove('rotate-180');
+                else icon.classList.add('rotate-180');
             }
         }
 
-        // ---------------- RENDER & LOGIC ----------------
-        function renderAllTables() {
-            // Render basic stat
-            document.getElementById('badgeCountPatroli').textContent = dataPatroliList.length;
-            document.getElementById('badgeCountKejadian').textContent = dataKejadianList.length;
-            document.getElementById('badgeCountPnp').textContent = dataPnpList.length;
-            const badgePetugas = document.getElementById('badgeCountPetugas');
-            if (badgePetugas) badgePetugas.textContent = dataPetugasList.length;
+        function renderCharts() {
+            const formatLabel = (dateStr) => {
+                const split = dateStr.split(', ');
+                return split.length > 1 ? split[1].substring(0, 6) : dateStr;
+            };
 
-            const isManagement = currentUser && (currentUser.regu === 'Management' || currentUser.jabatan === 'Admin' || currentUser.jabatan === 'Chief Security');
+            const groupedPatroli = groupBy(dataPatroliList, 'hariTgl');
+            const labelsPatroli = Object.keys(groupedPatroli).reverse();
+            const dataPatroli = labelsPatroli.map(date => groupedPatroli[date].length);
 
-            // Render Patroli (Tampilan Ringkas)
-            let phtml = '';
-            dataPatroliList.forEach((d,i) => {
-                phtml += `<tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
-                    <td class="p-3 whitespace-nowrap">${d.hariTgl || '-'}</td>
-                    <td class="p-3 whitespace-nowrap font-mono">${d.jam || '-'}</td>
-                    <td class="p-3 font-extrabold text-rose-700 whitespace-nowrap">${d.noLrv || '-'}</td>
-                    <td class="p-3 whitespace-nowrap font-medium">${d.namaAsp || '-'}</td>
-                    <td class="p-3 whitespace-nowrap font-bold text-slate-800">${d.namaWalka || '-'}</td>
-                    <td class="p-3 whitespace-nowrap font-mono text-slate-500">${d.kodeHt || '-'}</td>
-                    <td class="p-3 text-center">
-                        <div class="flex items-center justify-center gap-2">
-                            <button onclick="sendWAPatroli(${i})" class="text-emerald-500 hover:text-emerald-700" title="Kirim WA"><i class="fa-brands fa-whatsapp text-xl"></i></button>
-                            ${isManagement ? `
-                            <span class="text-slate-300">|</span>
-                            <button onclick="showDetailPatroli(${i})" class="text-blue-500 hover:text-blue-700" title="Detail"><i class="fa-solid fa-circle-info text-xl"></i></button>
-                            <button onclick="deleteItem('patroli', ${i})" class="text-rose-500 hover:text-rose-700" title="Hapus"><i class="fa-solid fa-trash-can text-xl"></i></button>
-                            ` : ''}
-                        </div>
-                    </td>
-                </tr>`;
-            });
-            const tbodyPatroli = document.getElementById('tbodyPatroli');
-            if(tbodyPatroli) { tbodyPatroli.innerHTML = phtml || `<tr><td colspan="7" class="p-4 text-center text-slate-500">Tidak ada data</td></tr>`; }
+            const groupedKejadian = groupBy(dataKejadianList, 'hariTgl');
+            const labelsKejadian = Object.keys(groupedKejadian).reverse();
+            const dataKejadian = labelsKejadian.map(date => groupedKejadian[date].length);
 
-            // Render Kejadian
-            let khtml = '';
-            dataKejadianList.forEach((d,i) => {
-                khtml += `<tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
-                    <td class="p-3 whitespace-nowrap">${d.hariTgl || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.lokasi || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.waktu || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.petugas || '-'}</td>
-                    <td class="p-3 min-w-[200px] truncate">${d.kronologi || '-'}</td>
-                    <td class="p-3 min-w-[200px] truncate">${d.tindakan || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.kerugian || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.waktuTindakan || '-'}</td>
-                    <td class="p-3 text-center">
-                        <div class="flex items-center justify-center gap-2">
-                            <button onclick="sendWAKejadian(${i})" class="text-emerald-500 hover:text-emerald-700" title="Kirim WA"><i class="fa-brands fa-whatsapp text-xl"></i></button>
-                            ${isManagement ? `
-                            <span class="text-slate-300">|</span>
-                            <button onclick="showDetailKejadian(${i})" class="text-blue-500 hover:text-blue-700" title="Detail"><i class="fa-solid fa-circle-info text-xl"></i></button>
-                            <button onclick="deleteItem('kejadian', ${i})" class="text-rose-500 hover:text-rose-700" title="Hapus"><i class="fa-solid fa-trash-can text-xl"></i></button>
-                            ` : ''}
-                        </div>
-                    </td>
-                </tr>`;
-            });
-            const tbodyKejadian = document.getElementById('tbodyKejadian');
-            if(tbodyKejadian) { tbodyKejadian.innerHTML = khtml || `<tr><td colspan="9" class="p-4 text-center text-slate-500">Tidak ada data</td></tr>`; }
+            const groupedPnp = groupBy(dataPnpList, 'hariTgl');
+            const labelsPnp = Object.keys(groupedPnp).reverse();
+            const dataPnp = labelsPnp.map(date => groupedPnp[date].reduce((sum, item) => sum + parseInt(item.jumlah || 0), 0));
 
-            // Render PNP
-            let pnphtml = '';
-            dataPnpList.forEach((d,i) => {
-                pnphtml += `<tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
-                    <td class="p-3 whitespace-nowrap">${d.hariTgl || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.jam || '-'}</td>
-                    <td class="p-3 font-bold whitespace-nowrap">${d.noLrv || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.namaAsp || '-'}</td>
-                    <td class="p-3 whitespace-nowrap">${d.namaWalka || '-'}</td>
-                    <td class="p-3 text-sky-600 font-bold whitespace-nowrap">${d.jumlah || '-'}</td>
-                    <td class="p-3 min-w-[200px] truncate">${d.keterangan || '-'}</td>
-                    <td class="p-3 text-center">
-                        <div class="flex items-center justify-center gap-2">
-                            <button onclick="sendWAPnp(${i})" class="text-emerald-500 hover:text-emerald-700" title="Kirim WA"><i class="fa-brands fa-whatsapp text-xl"></i></button>
-                            ${isManagement ? `
-                            <span class="text-slate-300">|</span>
-                            <button onclick="showDetailPnp(${i})" class="text-blue-500 hover:text-blue-700" title="Detail"><i class="fa-solid fa-circle-info text-xl"></i></button>
-                            <button onclick="deleteItem('pnp', ${i})" class="text-rose-500 hover:text-rose-700" title="Hapus"><i class="fa-solid fa-trash-can text-xl"></i></button>
-                            ` : ''}
-                        </div>
-                    </td>
-                </tr>`;
-            });
-            const tbodyPnp = document.getElementById('tbodyPnp');
-            if(tbodyPnp) { tbodyPnp.innerHTML = pnphtml || `<tr><td colspan="8" class="p-4 text-center text-slate-500">Tidak ada data</td></tr>`; }
-
-            // Render Petugas (Grouping)
-            const tbPetugas = document.getElementById('tbodyPetugas');
-            const filterVal = document.getElementById('filterReguSelect') ? document.getElementById('filterReguSelect').value : 'ALL';
-            const orderedGroups = ['Regu 1', 'Regu 2', 'Regu 3', 'Management'];
-            
-            let petugasHtml = '';
-            orderedGroups.forEach(groupName => {
-                if (filterVal !== 'ALL' && filterVal !== groupName) return;
-                
-                const items = dataPetugasList.filter(p => p.regu === groupName);
-                if (items.length === 0) return;
-
-                petugasHtml += `
-                <tr class="bg-slate-200 dark:bg-slate-700">
-                    <td colspan="6" class="p-2 font-bold text-slate-800 dark:text-white uppercase text-[10px]"><i class="fa-solid fa-users-viewfinder mr-2"></i> ${groupName} (${items.length} Personil)</td>
-                </tr>`;
-
-                items.forEach((d) => {
-                    const originalIndex = dataPetugasList.indexOf(d);
-                    const photoUrl = d.foto ? extractImageUrl(d.foto) : `https://placehold.co/100x100/e11d48/ffffff?text=${d.nama.charAt(0)}`;
-                    petugasHtml += `<tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
-                        <td class="p-3">${originalIndex+1}</td>
-                        <td class="p-3 text-center">
-                            <img src="${photoUrl}" alt="${d.nama}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-slate-200 inline-block">
-                        </td>
-                        <td class="p-3 font-bold text-slate-800 dark:text-white">${d.nama}</td>
-                        <td class="p-3"><span class="bg-white dark:bg-slate-800 border border-slate-300 px-2 py-1 rounded text-[10px] font-bold">${d.regu}</span></td>
-                        <td class="p-3 font-medium">${d.jabatan}</td>
-                        <td class="p-3 text-center">
-                            ${isManagement ? `<button onclick="deleteItem('petugas', ${originalIndex})" class="text-rose-600 hover:text-rose-800 p-1" title="Hapus"><i class="fa-solid fa-trash-can text-lg"></i></button>` : `<i class="fa-solid fa-lock text-slate-300" title="Hanya Management"></i>`}
-                        </td>
-                    </tr>`;
+            function buildChart(ctxId, instanceObj, labels, data, labelStr, colorStr, bgColorStr) {
+                const ctx = document.getElementById(ctxId);
+                if (!ctx) return instanceObj;
+                if (instanceObj) {
+                    instanceObj.data.labels = labels.map(formatLabel);
+                    instanceObj.data.datasets[0].data = data;
+                    instanceObj.update();
+                    return instanceObj;
+                }
+                return new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels.map(formatLabel),
+                        datasets: [{
+                            label: labelStr,
+                            data: data,
+                            backgroundColor: bgColorStr,
+                            borderColor: colorStr,
+                            borderWidth: 2,
+                            borderRadius: 4,
+                            hoverBackgroundColor: colorStr
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
                 });
-            });
-            if(tbPetugas) { tbPetugas.innerHTML = petugasHtml || `<tr><td colspan="6" class="p-4 text-center text-slate-500">Tidak ada data</td></tr>`; }
+            }
+
+            chartPatroliInstance = buildChart('chartPatroli', chartPatroliInstance, labelsPatroli, dataPatroli, 'Jumlah Keberangkatan', '#e11d48', 'rgba(225, 29, 72, 0.25)');
+            chartKejadianInstance = buildChart('chartKejadian', chartKejadianInstance, labelsKejadian, dataKejadian, 'Jumlah Kejadian', '#d97706', 'rgba(217, 119, 6, 0.25)');
+            chartPnpInstance = buildChart('chartPnp', chartPnpInstance, labelsPnp, dataPnp, 'Total Penumpang (PNP)', '#0284c7', 'rgba(2, 132, 199, 0.25)');
         }
 
-        function deleteItem(type, idx) {
-            let list = type === 'patroli' ? dataPatroliList : type === 'kejadian' ? dataKejadianList : type === 'pnp' ? dataPnpList : dataPetugasList;
-            list.splice(idx, 1);
+        function getReguHeaderTheme(reguName) {
+            if (reguName === 'Management') return { bg: 'bg-indigo-600 text-white', badge: 'bg-indigo-800 text-indigo-100', icon: 'fa-user-shield' };
+            if (reguName === 'Regu 1') return { bg: 'bg-sky-600 text-white', badge: 'bg-sky-800 text-sky-100', icon: 'fa-users-line' };
+            if (reguName === 'Regu 2') return { bg: 'bg-emerald-600 text-white', badge: 'bg-emerald-800 text-emerald-100', icon: 'fa-users-line' };
+            if (reguName === 'Regu 3') return { bg: 'bg-amber-600 text-white', badge: 'bg-amber-800 text-amber-100', icon: 'fa-users-line' };
+            return { bg: 'bg-slate-700 text-white', badge: 'bg-slate-900 text-white', icon: 'fa-users' };
+        }
+
+        function renderAllTables() {
+            const bPat = document.getElementById('badgeCountPatroli');
+            const bKej = document.getElementById('badgeCountKejadian');
+            const bPnp = document.getElementById('badgeCountPnp');
+            const bPet = document.getElementById('badgeCountPetugas');
+            
+            if(bPat) bPat.textContent = dataPatroliList.length;
+            if(bKej) bKej.textContent = dataKejadianList.length;
+            if(bPnp) bPnp.textContent = dataPnpList.length;
+            if(bPet) bPet.textContent = dataPetugasList.length;
+
+            if (!window.groupState) window.groupState = { patroli: {}, kejadian: {}, pnp: {}, petugas: {} };
+            const hasEditAccess = currentUser && (currentUser.jabatan === 'Admin' || currentUser.jabatan === 'Chief Security');
+
+            // --- 1. RENDER PATROLI ---
+            const tbPatroli = document.getElementById('tbodyPatroli');
+            if (tbPatroli) {
+                const groupedPatroli = groupBy(dataPatroliList, 'hariTgl');
+                let html = '';
+                for (const [date, items] of Object.entries(groupedPatroli)) {
+                    const safeClass = date.replace(/[^a-zA-Z0-9]/g, '');
+                    const isExpanded = window.groupState.patroli[safeClass] !== false;
+                    const rowHidden = isExpanded ? '' : 'hidden';
+                    const iconRotated = isExpanded ? 'rotate-180' : '';
+
+                    html += `
+                        <tr class="bg-slate-100 cursor-pointer border-y border-slate-200 hover:bg-slate-200 transition-colors" onclick="toggleGroup('patroli', '${date}')">
+                            <td colspan="7" class="p-3">
+                                <div class="flex items-center justify-between font-extrabold text-slate-800 text-sm">
+                                    <span class="flex items-center gap-2.5"><i class="fa-solid fa-calendar-day text-rose-600"></i> ${date} (${items.length} Laporan)</span>
+                                    <i id="icon-patroli-${safeClass}" class="fa-solid fa-chevron-down transition-transform duration-300 ${iconRotated}"></i>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    items.forEach(d => {
+                        const originalIndex = dataPatroliList.indexOf(d);
+                        html += `
+                            <tr class="hover:bg-rose-50 cursor-pointer transition-colors child-patroli-${safeClass} ${rowHidden}" onclick="showDetailPatroli(${originalIndex})">
+                                <td class="p-3 font-medium whitespace-nowrap">${d.hariTgl}</td>
+                                <td class="p-3 font-mono">${d.jam}</td>
+                                <td class="p-3"><span class="px-2 py-1 rounded bg-rose-100 text-rose-800 font-bold">${d.noLrv}</span></td>
+                                <td class="p-3 whitespace-nowrap">${d.namaAsp || '-'}</td>
+                                <td class="p-3 font-semibold text-slate-900 whitespace-nowrap">${d.namaWalka}</td>
+                                <td class="p-3 font-mono text-slate-600 font-semibold whitespace-nowrap">${d.kodeHt || '-'}</td>
+                                <td class="p-3 text-center" onclick="event.stopPropagation()">
+                                    <div class="flex items-center justify-center gap-1.5">
+                                        <button onclick="sendWAPatroli(${originalIndex})" class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white transition flex items-center justify-center shadow-sm" title="Kirim Laporan WA"><i class="fa-brands fa-whatsapp text-lg"></i></button>
+                                        ${hasEditAccess ? `<button onclick="deleteItem('patroli', ${originalIndex})" class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 hover:bg-rose-600 hover:text-white transition flex items-center justify-center shadow-sm" title="Hapus Data"><i class="fa-solid fa-trash-can"></i></button>` : ``}
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                tbPatroli.innerHTML = html;
+            }
+
+            // --- 2. RENDER KEJADIAN ---
+            const tbKejadian = document.getElementById('tbodyKejadian');
+            if (tbKejadian) {
+                const groupedKejadian = groupBy(dataKejadianList, 'hariTgl');
+                let html = '';
+                for (const [date, items] of Object.entries(groupedKejadian)) {
+                    const safeClass = date.replace(/[^a-zA-Z0-9]/g, '');
+                    const isExpanded = window.groupState.kejadian[safeClass] !== false;
+                    const rowHidden = isExpanded ? '' : 'hidden';
+                    const iconRotated = isExpanded ? 'rotate-180' : '';
+
+                    html += `
+                        <tr class="bg-slate-100 cursor-pointer border-y border-slate-200 hover:bg-slate-200 transition-colors" onclick="toggleGroup('kejadian', '${date}')">
+                            <td colspan="9" class="p-3">
+                                <div class="flex items-center justify-between font-extrabold text-slate-800 text-sm">
+                                    <span class="flex items-center gap-2.5"><i class="fa-solid fa-calendar-day text-amber-600"></i> ${date} (${items.length} Laporan)</span>
+                                    <i id="icon-kejadian-${safeClass}" class="fa-solid fa-chevron-down transition-transform duration-300 ${iconRotated}"></i>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    items.forEach(d => {
+                        const originalIndex = dataKejadianList.indexOf(d);
+                        html += `
+                            <tr class="hover:bg-amber-50 cursor-pointer transition-colors child-kejadian-${safeClass} ${rowHidden}" onclick="showDetailKejadian(${originalIndex})">
+                                <td class="p-3 whitespace-nowrap font-medium">${d.hariTgl}</td>
+                                <td class="p-3 font-semibold text-rose-700 whitespace-nowrap">${d.lokasi}</td>
+                                <td class="p-3 font-mono">${d.waktu}</td>
+                                <td class="p-3 whitespace-nowrap font-semibold">${d.petugas}</td>
+                                <td class="p-3 max-w-xs truncate">${d.kronologi}</td>
+                                <td class="p-3 max-w-xs truncate">${d.tindakan}</td>
+                                <td class="p-3"><span class="px-2 py-1 rounded bg-amber-100 text-amber-800 font-semibold whitespace-nowrap">${d.kerugian}</span></td>
+                                <td class="p-3 font-mono">${d.waktuTindakan}</td>
+                                <td class="p-3 text-center" onclick="event.stopPropagation()">
+                                    <div class="flex items-center justify-center gap-1.5">
+                                        <button onclick="sendWAKejadian(${originalIndex})" class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white transition flex items-center justify-center shadow-sm" title="Kirim Laporan WA"><i class="fa-brands fa-whatsapp text-lg"></i></button>
+                                        ${hasEditAccess ? `<button onclick="deleteItem('kejadian', ${originalIndex})" class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 hover:bg-rose-600 hover:text-white transition flex items-center justify-center shadow-sm" title="Hapus Data"><i class="fa-solid fa-trash-can"></i></button>` : ``}
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                tbKejadian.innerHTML = html;
+            }
+
+            // --- 3. RENDER PNP ---
+            const tbPnp = document.getElementById('tbodyPnp');
+            if (tbPnp) {
+                const groupedPnp = groupBy(dataPnpList, 'hariTgl');
+                let html = '';
+                for (const [date, items] of Object.entries(groupedPnp)) {
+                    const safeClass = date.replace(/[^a-zA-Z0-9]/g, '');
+                    const isExpanded = window.groupState.pnp[safeClass] !== false;
+                    const rowHidden = isExpanded ? '' : 'hidden';
+                    const iconRotated = isExpanded ? 'rotate-180' : '';
+                    const totalPnp = items.reduce((sum, current) => sum + parseInt(current.jumlah || 0), 0);
+
+                    html += `
+                        <tr class="bg-slate-100 cursor-pointer border-y border-slate-200 hover:bg-slate-200 transition-colors" onclick="toggleGroup('pnp', '${date}')">
+                            <td colspan="8" class="p-3">
+                                <div class="flex items-center justify-between font-extrabold text-slate-800 text-sm">
+                                    <span class="flex items-center gap-2.5"><i class="fa-solid fa-calendar-day text-sky-600"></i> ${date}</span>
+                                    <div class="flex items-center gap-3">
+                                        <span class="px-3 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold">Total: ${totalPnp} PNP</span>
+                                        <i id="icon-pnp-${safeClass}" class="fa-solid fa-chevron-down transition-transform duration-300 ${iconRotated}"></i>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    items.forEach(d => {
+                        const originalIndex = dataPnpList.indexOf(d);
+                        html += `
+                            <tr class="hover:bg-sky-50 cursor-pointer transition-colors child-pnp-${safeClass} ${rowHidden}" onclick="showDetailPnp(${originalIndex})">
+                                <td class="p-3 font-medium whitespace-nowrap">${d.hariTgl}</td>
+                                <td class="p-3 font-mono">${d.jam}</td>
+                                <td class="p-3"><span class="px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800 font-bold">${d.noLrv}</span></td>
+                                <td class="p-3 whitespace-nowrap">${d.namaAsp || '-'}</td>
+                                <td class="p-3 font-semibold whitespace-nowrap">${d.namaWalka}</td>
+                                <td class="p-3"><span class="text-sm font-extrabold text-emerald-700 whitespace-nowrap">${d.jumlah} PNP</span></td>
+                                <td class="p-3 min-w-[200px] truncate">${d.keterangan}</td>
+                                <td class="p-3 text-center" onclick="event.stopPropagation()">
+                                    <div class="flex items-center justify-center gap-1.5">
+                                        <button onclick="sendWAPnp(${originalIndex})" class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white transition flex items-center justify-center shadow-sm" title="Kirim Laporan WA"><i class="fa-brands fa-whatsapp text-lg"></i></button>
+                                        ${hasEditAccess ? `<button onclick="deleteItem('pnp', ${originalIndex})" class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 hover:bg-rose-600 hover:text-white transition flex items-center justify-center shadow-sm" title="Hapus Data"><i class="fa-solid fa-trash-can"></i></button>` : ``}
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                tbPnp.innerHTML = html;
+            }
+
+            // --- 4. RENDER PETUGAS ---
+            const tbPetugas = document.getElementById('tbodyPetugas');
+            if (tbPetugas) {
+                const filterVal = document.getElementById('filterReguSelect') ? document.getElementById('filterReguSelect').value : 'ALL';
+                const orderedGroups = ['Regu 1', 'Regu 2', 'Regu 3', 'Management'];
+                const groupedPetugas = groupBy(dataPetugasList, 'regu');
+                let html = '';
+
+                orderedGroups.forEach(groupName => {
+                    if (filterVal !== 'ALL' && filterVal !== groupName && filterVal !== 'Management') {
+                        if(filterVal.includes('ALL') === false && !groupName.includes(filterVal.replace(/[^0-9]/g, ''))) {
+                            if(!(filterVal === 'Management' && groupName === 'Management')) return;
+                        }
+                    }
+                    const items = groupedPetugas[groupName] || [];
+                    if (items.length === 0) return;
+
+                    const safeClass = groupName.replace(/[^a-zA-Z0-9]/g, '');
+                    const isExpanded = window.groupState.petugas[safeClass] !== false;
+                    const rowHidden = isExpanded ? '' : 'hidden';
+                    const iconRotated = isExpanded ? 'rotate-180' : '';
+                    const theme = getReguHeaderTheme(groupName);
+
+                    html += `
+                        <tr class="cursor-pointer transition-opacity hover:opacity-95" onclick="toggleGroup('petugas', '${groupName}')">
+                            <td colspan="6" class="p-3 ${theme.bg}">
+                                <div class="flex items-center justify-between font-extrabold text-sm">
+                                    <span class="flex items-center gap-2.5">
+                                        <i class="fa-solid ${theme.icon}"></i>
+                                        <span>${groupName}</span>
+                                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${theme.badge}">${items.length} Personil</span>
+                                    </span>
+                                    <i id="icon-petugas-${safeClass}" class="fa-solid fa-chevron-down transition-transform duration-300 ${iconRotated}"></i>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    items.forEach((d, idx) => {
+                        const originalIndex = dataPetugasList.indexOf(d);
+                        const isDanruOrChief = d.jabatan === 'Danru' || d.jabatan === 'Chief Security' || d.jabatan === 'Admin';
+                        const jabBadge = isDanruOrChief ? 'bg-rose-100 text-rose-800 border border-rose-200 font-bold' : 'bg-slate-100 text-slate-700 font-semibold';
+                        
+                        html += `
+                            <tr class="hover:bg-slate-50 cursor-pointer transition-colors child-petugas-${safeClass} ${rowHidden}" onclick="showDetailPetugas(${originalIndex})">
+                                <td class="p-3 font-bold text-slate-500">${idx + 1}</td>
+                                <td class="p-3 text-center">
+                                    <img src="${extractImageUrl(d.foto)}" alt="${d.nama}" class="w-10 h-10 rounded-full object-cover border border-slate-200 mx-auto" onerror="this.src='https://placehold.co/100x100/9f1239/ffffff?text=WK'">
+                                </td>
+                                <td class="p-3 font-bold text-slate-900 whitespace-nowrap">${d.nama}</td>
+                                <td class="p-3 font-bold text-slate-700 whitespace-nowrap">${d.regu}</td>
+                                <td class="p-3 whitespace-nowrap"><span class="px-2.5 py-1 rounded-full text-[11px] ${jabBadge}">${d.jabatan}</span></td>
+                                <td class="p-3 text-center" onclick="event.stopPropagation()">
+                                    ${hasEditAccess ? `<button onclick="deleteItem('petugas', ${originalIndex})" class="text-rose-600 hover:text-rose-800 p-1"><i class="fa-solid fa-trash-can"></i></button>` : `<i class="fa-solid fa-lock text-slate-300"></i>`}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                });
+                tbPetugas.innerHTML = html;
+            }
+
+            renderCharts();
+        }
+
+        async function deleteItem(type, idx) {
+            let targetList = type === 'patroli' ? dataPatroliList :
+                             type === 'kejadian' ? dataKejadianList :
+                             type === 'pnp' ? dataPnpList : dataPetugasList;
+            const item = targetList[idx];
+            const identifier = item ? (item.id || item.noId || item.nama) : '';
+            targetList.splice(idx, 1);
             saveRealDataCache();
             renderAllTables();
-            showToast('Data berhasil dihapus', 'success');
+            showToast('Data berhasil dihapus.', 'info');
+            if (identifier) {
+                await callBackend('deleteItem', { type: type, id: identifier });
+                forceSync(true);
+            }
         }
 
-        // ---------------- FORMS ----------------
+        // ---------------- MODAL DETAILS & WHATSAPP LOGIC ----------------
+        function openDetailModal(modalId, contentId) {
+            const modal = document.getElementById(modalId);
+            const content = document.getElementById(contentId);
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeDetailModal(modalId, contentId) {
+            const modal = document.getElementById(modalId);
+            const content = document.getElementById(contentId);
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 250);
+        }
+
+        // --- PATROLI ---
+        function showDetailPatroli(idx) {
+            const d = dataPatroliList[idx];
+            if(!d) return;
+            document.getElementById('dp_tgl').textContent = d.hariTgl;
+            document.getElementById('dp_jam').textContent = d.jam + ' WIB';
+            document.getElementById('dp_lrv').textContent = d.noLrv;
+            document.getElementById('dp_asp').textContent = d.namaAsp || '-';
+            document.getElementById('dp_walka').textContent = d.namaWalka;
+            document.getElementById('dp_suhuA').textContent = (d.suhuA || '-') + '°C';
+            document.getElementById('dp_suhuB').textContent = (d.suhuB || '-') + '°C';
+            document.getElementById('dp_announcer').textContent = d.announcer || '-';
+            document.getElementById('dp_pid').textContent = d.pid || '-';
+            document.getElementById('dp_drm').textContent = d.drm || '-';
+            document.getElementById('dp_tangga').textContent = d.tangga || '-';
+            document.getElementById('dp_box').textContent = d.boxEmergency || '-';
+            document.getElementById('dp_apar').textContent = d.apar || '-';
+            document.getElementById('dp_interkom').textContent = d.interkom || '-';
+            document.getElementById('dp_ket').textContent = d.keterangan || '-';
+            document.getElementById('dp_foto').src = extractImageUrl(d.fotoPatroli);
+            openDetailModal('modalDetailPatroli', 'modalDetailPatroliContent');
+        }
+        function closeDetailPatroli() { closeDetailModal('modalDetailPatroli', 'modalDetailPatroliContent'); }
+
+        // --- KEJADIAN ---
+        function showDetailKejadian(idx) {
+            const d = dataKejadianList[idx];
+            if(!d) return;
+            document.getElementById('dk_tgl').textContent = d.hariTgl;
+            document.getElementById('dk_waktu').textContent = d.waktu + ' WIB';
+            document.getElementById('dk_petugas').textContent = d.petugas;
+            document.getElementById('dk_lokasi').textContent = d.lokasi;
+            document.getElementById('dk_krono').textContent = d.kronologi;
+            document.getElementById('dk_tindakan').textContent = d.tindakan;
+            document.getElementById('dk_selesai').textContent = d.waktuTindakan + ' WIB';
+            document.getElementById('dk_rugi').textContent = d.kerugian;
+            document.getElementById('dk_foto1').src = extractImageUrl(d.fotoKejadian);
+            document.getElementById('dk_foto2').src = extractImageUrl(d.fotoTindakan);
+            openDetailModal('modalDetailKejadian', 'modalDetailKejadianContent');
+        }
+        function closeDetailKejadian() { closeDetailModal('modalDetailKejadian', 'modalDetailKejadianContent'); }
+
+        // --- PNP ---
+        function showDetailPnp(idx) {
+            const d = dataPnpList[idx];
+            if(!d) return;
+            document.getElementById('dpnp_tgl').textContent = d.hariTgl;
+            document.getElementById('dpnp_jam').textContent = d.jam + ' WIB';
+            document.getElementById('dpnp_lrv').textContent = d.noLrv;
+            document.getElementById('dpnp_walka').textContent = d.namaWalka;
+            document.getElementById('dpnp_jumlah').textContent = d.jumlah + ' Orang';
+            document.getElementById('dpnp_ket').textContent = d.keterangan;
+            document.getElementById('dpnp_foto').src = extractImageUrl(d.fotoPnp);
+            openDetailModal('modalDetailPnp', 'modalDetailPnpContent');
+        }
+        function closeDetailPnp() { closeDetailModal('modalDetailPnp', 'modalDetailPnpContent'); }
+
+        // --- PETUGAS ---
+        let currentDetailUserIndex = -1;
+        function showDetailPetugas(index) {
+            currentDetailUserIndex = index;
+            const data = dataPetugasList[index];
+            if (!data) return;
+            
+            document.getElementById('detailFoto').src = extractImageUrl(data.foto);
+            document.getElementById('detailBanner').src = extractImageUrl(data.banner || DEFAULT_BANNER_URL);
+            document.getElementById('detailNama').textContent = data.nama;
+            document.getElementById('detailNoId').textContent = data.noId;
+            document.getElementById('detailRegu').textContent = data.regu || 'Regu 1';
+            document.getElementById('detailJabatan').textContent = data.jabatan;
+            document.getElementById('detailJobdesk').textContent = data.jobdesk || '-';
+            document.getElementById('detailAlamat').textContent = data.alamat || '-';
+            document.getElementById('detailNoHp').textContent = data.noHp || '-';
+            document.getElementById('detailNoKta').textContent = data.noKta || '-';
+            document.getElementById('detailNoIjazah').textContent = data.noIjazah || '-';
+            document.getElementById('detailEmail').textContent = data.email || '-';
+
+            const btnEdit = document.getElementById('btnEditFromDetail');
+            if (currentUser && (currentUser.jabatan === 'Admin' || currentUser.jabatan === 'Chief Security' || currentUser.name === data.nama)) {
+                btnEdit.classList.remove('hidden');
+            } else {
+                btnEdit.classList.add('hidden');
+            }
+            openDetailModal('modalDetailPetugas', 'modalDetailContent');
+        }
+        function closeDetailPetugas() { closeDetailModal('modalDetailPetugas', 'modalDetailContent'); }
+
+        function openEditProfileFromDetail() {
+            closeDetailPetugas();
+            setTimeout(() => { openEditProfile(currentDetailUserIndex); }, 260);
+        }
+        
+        function openEditProfile(index = -1) {
+            closeAllSheets();
+            let targetName = currentUser ? currentUser.name : '';
+            if (index !== -1 && dataPetugasList[index]) { targetName = dataPetugasList[index].nama; }
+
+            const user = dataPetugasList.find(u => u.nama === targetName) || dataPetugasList[0];
+            if (user) {
+                document.getElementById('editNama').value = user.nama;
+                document.getElementById('editNoId').value = user.noId;
+                document.getElementById('editRegu').value = user.regu || 'Regu 1';
+                document.getElementById('editJabatan').value = user.jabatan;
+                document.getElementById('editJobdesk').value = user.jobdesk || '';
+                document.getElementById('editAlamat').value = user.alamat || '';
+                document.getElementById('editNoHp').value = user.noHp || '';
+                document.getElementById('editNoKta').value = user.noKta || '';
+                document.getElementById('editNoIjazah').value = user.noIjazah || '';
+                document.getElementById('editEmail').value = user.email || '';
+                document.getElementById('editPassword').value = user.password || '';
+                
+                document.getElementById('prevFotoEdit').value = user.foto;
+                document.getElementById('imgPreviewEdit').src = extractImageUrl(user.foto);
+                document.getElementById('imgPreviewEdit').classList.remove('hidden');
+
+                document.getElementById('prevBannerEdit').value = user.banner || DEFAULT_BANNER_URL;
+                document.getElementById('imgPreviewBannerEdit').src = extractImageUrl(user.banner || DEFAULT_BANNER_URL);
+                document.getElementById('imgPreviewBannerEdit').classList.remove('hidden');
+                
+                document.getElementById('formEditProfile').dataset.editTargetName = user.nama;
+                openDetailModal('modalEditProfile', 'modalEditProfile');
+            }
+        }
+        function closeEditProfile() { closeDetailModal('modalEditProfile', 'modalEditProfile'); }
+
+        async function submitEditProfile(e) {
+            e.preventDefault();
+            const targetName = document.getElementById('formEditProfile').dataset.editTargetName || (currentUser ? currentUser.name : '');
+            const userIndex = dataPetugasList.findIndex(u => u.nama === targetName);
+            
+            if (userIndex !== -1) {
+                const oldName = dataPetugasList[userIndex].nama;
+                dataPetugasList[userIndex].nama = document.getElementById('editNama').value;
+                dataPetugasList[userIndex].noId = document.getElementById('editNoId').value;
+                dataPetugasList[userIndex].regu = document.getElementById('editRegu').value;
+                dataPetugasList[userIndex].jabatan = document.getElementById('editJabatan').value;
+                dataPetugasList[userIndex].jobdesk = document.getElementById('editJobdesk').value;
+                dataPetugasList[userIndex].alamat = document.getElementById('editAlamat').value;
+                dataPetugasList[userIndex].noHp = document.getElementById('editNoHp').value;
+                dataPetugasList[userIndex].noKta = document.getElementById('editNoKta').value;
+                dataPetugasList[userIndex].noIjazah = document.getElementById('editNoIjazah').value;
+                dataPetugasList[userIndex].email = document.getElementById('editEmail').value;
+                dataPetugasList[userIndex].password = document.getElementById('editPassword').value;
+                
+                const newFoto = document.getElementById('prevFotoEdit').value;
+                if (newFoto) dataPetugasList[userIndex].foto = newFoto;
+                const newBanner = document.getElementById('prevBannerEdit').value;
+                if (newBanner) dataPetugasList[userIndex].banner = newBanner;
+                
+                if (currentUser && oldName === currentUser.name) {
+                    currentUser.name = dataPetugasList[userIndex].nama;
+                    currentUser.regu = dataPetugasList[userIndex].regu;
+                    currentUser.jabatan = dataPetugasList[userIndex].jabatan;
+                    currentUser.photo = dataPetugasList[userIndex].foto;
+                    currentUser.banner = dataPetugasList[userIndex].banner;
+                    localStorage.setItem('walkaUser', JSON.stringify(currentUser));
+                    updateProfileUI();
+                }
+                renderAllTables();
+                saveRealDataCache();
+                closeEditProfile();
+                await callBackend('updateProfile', Object.assign({ oldName: oldName }, dataPetugasList[userIndex]));
+                forceSync(true);
+                showToast('Profil & Banner berhasil diperbarui di Spreadsheet!', 'success');
+            }
+        }
+
+        // ---------------- FORM SUBMISSIONS & WHATSAPP FORMATTERS ----------------
         function getWhatsappGreeting(timeStr) {
-            if (!timeStr) return "Selamat Pagi Komandan";
             const [h, m] = timeStr.split(':').map(Number);
-            const timeVal = h * 60 + (m || 0);
+            const timeVal = h * 60 + m;
             if (timeVal >= 1 && timeVal <= 11 * 60 + 30) return "Selamat Pagi Komandan";
             if (timeVal >= 11 * 60 + 31 && timeVal <= 14 * 60 + 59) return "Selamat Siang Komandan";
             if (timeVal >= 15 * 60 && timeVal <= 18 * 60) return "Selamat Sore Komandan";
@@ -2457,18 +2904,23 @@
             return `${days[dateObj.getDay()]}, ${d} ${months[m - 1]} ${y}`;
         }
 
-        function submitPatroli(e) {
+        async function submitPatroli(e) {
             e.preventDefault();
+            showToast('Menyimpan data dan mengunggah foto ke Google Drive, harap tunggu...', 'info');
+            const btnSubmit = document.querySelector('#formPatroli button[type="submit"]:last-child');
+            if (btnSubmit) btnSubmit.disabled = true;
+
+            const shiftSel = document.getElementById('patShift');
+            const shiftLabel = shiftSel && shiftSel.options[shiftSel.selectedIndex].text.includes('Pagi') ? 'Pagi' : 'Siang';
+            const reqRegu = document.getElementById('patRegu') ? document.getElementById('patRegu').value.replace('Regu ', '') : '';
+
             const item = {
                 hariTgl: document.getElementById('patHariTgl').value,
-                shift: document.getElementById('patShift').value,
-                regu: document.getElementById('patRegu').value,
-                jamDinas: document.getElementById('patJamDinas').value,
                 jam: document.getElementById('patJam').value,
                 noLrv: document.getElementById('patNoLrv').value,
                 namaAsp: document.getElementById('patNamaAsp').value,
                 namaWalka: document.getElementById('patNamaWalka').value,
-                kodeHt: document.getElementById('patKodeHt').value,
+                kodeHt: document.getElementById('patKodeHt') ? document.getElementById('patKodeHt').value : '',
                 suhuA: document.getElementById('patSuhuA').value,
                 suhuB: document.getElementById('patSuhuB').value,
                 announcer: document.getElementById('patAnnouncer').value,
@@ -2478,102 +2930,104 @@
                 boxEmergency: document.getElementById('patBoxEmergency').value,
                 apar: document.getElementById('patApar').value,
                 interkom: document.getElementById('patInterkom').value,
-                keterangan: document.getElementById('patKeterangan').value,
-                fotoPatroli: document.getElementById('prevFotoPatroli').value
+                fotoPatroli: document.getElementById('prevFotoPatroli').value,
+                keterangan: `[Shift ${shiftLabel}, Regu ${reqRegu}] ` + document.getElementById('patKeterangan').value
             };
+
+            const res = await callBackend('savePatroli', item);
+            if(res && res.status === 'success' && res.data) {
+                item.fotoPatroli = res.data.fotoPatroli;
+            }
+
             dataPatroliList.unshift(item);
             saveRealDataCache();
             renderAllTables();
-            showToast('Laporan Keberangkatan Disimpan', 'success');
-            
-            // Trigger GPS Maker update so it transforms into a Train Icon
-            if(lastKnownUserLat !== null && lastKnownUserLng !== null) {
-                updateUserGpsMarker(lastKnownUserLat, lastKnownUserLng);
-            }
-            
-            // Format WhatsApp Message
-            const shiftLabel = item.shift === '1' ? 'Pagi' : 'Siang';
-            const reqRegu = item.regu.replace('Regu ', '');
+            forceSync(true);
+
             const greeting = getWhatsappGreeting(item.jam);
             const longDate = formatWA_Date(item.hariTgl);
             const lrvNum = item.noLrv.replace('LRV-', '');
-            
-            const waText = `*${greeting}*
 
-Izin melaporkan checklist patroli Keberangkatan Kereta pertama yang beroperasi hari ini.
-
-\`\`\`Hari/Tanggal :\`\`\` ${longDate}
-\`\`\`Shift      :\`\`\` ${shiftLabel}
-\`\`\`Regu         :\`\`\` ${reqRegu}
-\`\`\`Jam Dinas    :\`\`\` ${item.jamDinas} WIB
-
-*1.* LRV ${lrvNum}
-- *Suhu*
-\`\`\`Cars A  :\`\`\` ${item.suhuA}°
-\`\`\`Cars B  :\`\`\` ${item.suhuB}°
-- *Announcer*            \`\`\`: ${item.announcer}\`\`\`
-- *PID*                          \`\`\`: ${item.pid}\`\`\`
-- *DRM*                        \`\`\`: ${item.drm}\`\`\`
-- *Tangga Darurat*    \`\`\`: ${item.tangga}\`\`\`
-- *Box Emergency*    \`\`\`: ${item.boxEmergency}\`\`\`
-- *Apar*                        \`\`\`: ${item.apar}\`\`\`
-- *Intercom Darurat* \`\`\`: ${item.interkom}\`\`\`
-
-*Keterangan:*
-[Shift ${shiftLabel}, Regu ${reqRegu}] ${item.keterangan}
-
-Demikian Laporan Checklist Keberangkatan Kereta Pertama yang beroperasi hari ini, terimakasih.`;
-
+            const waText = `*${greeting}*\n\nIzin melaporkan checklist patroli Keberangkatan Kereta pertama yang beroperasi hari ini.\n\n\`\`\`Hari/Tanggal :\`\`\` ${longDate}\n\`\`\`Shift      :\`\`\` ${shiftLabel}\n\`\`\`Regu         :\`\`\` ${reqRegu}\n\`\`\`Jam Dinas    :\`\`\` ${document.getElementById('patJamDinas').value} WIB\n\n*1.* LRV ${lrvNum}\n- *Suhu*\n\`\`\`Cars A  :\`\`\` ${item.suhuA}°\n\`\`\`Cars B  :\`\`\` ${item.suhuB}°\n- *Announcer*            \`\`\`: ${item.announcer}\`\`\`\n- *PID*                         \`\`\`: ${item.pid}\`\`\`\n- *DRM*                       \`\`\`: ${item.drm}\`\`\`\n- *Tangga Darurat*    \`\`\`: ${item.tangga}\`\`\`\n- *Box Emergency*    \`\`\`: ${item.boxEmergency}\`\`\`\n- *Apar*                       \`\`\`: ${item.apar}\`\`\`\n- *Intercom Darurat* \`\`\`: ${item.interkom}\`\`\`\n\n*Lampiran Dokumentasi:*\n${item.fotoPatroli}\n\nDemikian Laporan Checklist Keberangkatan Kereta Pertama yang beroperasi hari ini, terimakasih.`;
             window.open('https://wa.me/?text=' + encodeURIComponent(waText), '_blank');
-            
-            navigateView('data-patroli');
+
+            if (btnSubmit) btnSubmit.disabled = false;
+            showToast('Laporan Keberangkatan berhasil dikirim & disimpan!', 'success');
             document.getElementById('formPatroli').reset();
-            initDefaultDates();
-            autoFillForms(); // Refill read-only info
+            autoFillForms();
+            navigateView('data-patroli');
         }
 
-        function submitKejadian(e) { 
-            e.preventDefault(); 
+        function sendWAPatroli(idx) {
+            const d = dataPatroliList[idx];
+            if(!d) return;
+            const greeting = getWhatsappGreeting(d.jam);
+            const longDate = formatWA_Date(d.hariTgl);
+            const lrvNum = d.noLrv.replace('LRV-', '');
+            
+            const waText = `*${greeting}*\n\nIzin melaporkan checklist patroli Keberangkatan Kereta.\n\n\`\`\`Hari/Tanggal :\`\`\` ${longDate}\n\`\`\`Jam          :\`\`\` ${d.jam} WIB\n\`\`\`No LRV       :\`\`\` ${d.noLrv}\n\`\`\`Nama Walka   :\`\`\` ${d.namaWalka}\n\n*1.* LRV ${lrvNum}\n- *Suhu*\n\`\`\`Cars A  :\`\`\` ${d.suhuA}°\n\`\`\`Cars B  :\`\`\` ${d.suhuB}°\n- *Announcer*            \`\`\`: ${d.announcer}\`\`\`\n- *PID*                         \`\`\`: ${d.pid}\`\`\`\n- *DRM*                       \`\`\`: ${d.drm}\`\`\`\n- *Tangga Darurat*    \`\`\`: ${d.tangga}\`\`\`\n- *Box Emergency*    \`\`\`: ${d.boxEmergency}\`\`\`\n- *Apar*                       \`\`\`: ${d.apar}\`\`\`\n- *Interkom Darurat* \`\`\`: ${d.interkom}\`\`\`\n\n*Keterangan:*\n${d.keterangan}`;
+            window.open('https://wa.me/?text=' + encodeURIComponent(waText), '_blank');
+        }
+
+        async function submitKejadian(e) {
+            e.preventDefault();
+            showToast('Menyimpan data dan mengunggah foto ke Google Drive, harap tunggu...', 'info');
+            const btnSubmit = document.querySelector('#formKejadian button[type="submit"]:last-child');
+            if (btnSubmit) btnSubmit.disabled = true;
+
             const item = {
                 hariTgl: document.getElementById('kejHariTgl').value,
-                shift: document.getElementById('kejShift').value,
-                regu: document.getElementById('kejRegu').value,
-                jamDinas: document.getElementById('kejJamDinas').value,
                 lokasi: document.getElementById('kejLokasi').value,
                 waktu: document.getElementById('kejWaktu').value,
                 petugas: document.getElementById('kejPetugas').value,
                 kronologi: document.getElementById('kejKronologi').value,
+                fotoKejadian: document.getElementById('prevFotoKejadian').value,
                 tindakan: document.getElementById('kejTindakan').value,
                 kerugian: document.getElementById('kejKerugian').value,
-                waktuTindakan: document.getElementById('kejWaktuTindakan').value,
-                fotoKejadian: document.getElementById('prevFotoKejadian').value,
-                fotoTindakan: document.getElementById('prevFotoTindakan').value
+                fotoTindakan: document.getElementById('prevFotoTindakan').value,
+                waktuTindakan: document.getElementById('kejWaktuTindakan').value
             };
+
+            const res = await callBackend('saveKejadian', item);
+            if(res && res.status === 'success' && res.data) {
+                item.fotoKejadian = res.data.fotoKejadian;
+                item.fotoTindakan = res.data.fotoTindakan;
+            }
+
             dataKejadianList.unshift(item);
             saveRealDataCache();
             renderAllTables();
-            showToast('Laporan Kejadian Disimpan', 'success');
-            
+            forceSync(true);
+
             const greeting = getWhatsappGreeting(item.waktu);
             const longDate = formatWA_Date(item.hariTgl);
-            const shiftLabel = item.shift === '1' ? 'Pagi' : 'Siang';
-            
-            const waText = `*${greeting}*\n\nIzin melaporkan *Kejadian* di area LRT Jakarta.\n\n\`\`\`Hari/Tanggal :\`\`\` ${longDate}\n\`\`\`Waktu        :\`\`\` ${item.waktu} WIB\n\`\`\`Shift        :\`\`\` ${shiftLabel} (${item.jamDinas})\n\`\`\`Lokasi       :\`\`\` ${item.lokasi}\n\`\`\`Petugas      :\`\`\` ${item.petugas}\n\n*Kronologi Kejadian:*\n${item.kronologi}\n\n*Tindakan Dilakukan:*\n${item.tindakan}\n\n*Kerugian:*\n${item.kerugian}\n*Waktu Selesai:* ${item.waktuTindakan} WIB\n\nDemikian laporan kejadian yang dapat disampaikan. Terimakasih.`;
+            const waText = `*${greeting}*\n\nIzin melaporkan *Kejadian* di area LRT Jakarta.\n\n\`\`\`Hari/Tanggal :\`\`\` ${longDate}\n\`\`\`Waktu        :\`\`\` ${item.waktu} WIB\n\`\`\`Lokasi       :\`\`\` ${item.lokasi}\n\`\`\`Petugas      :\`\`\` ${item.petugas}\n\n*Kronologi Kejadian:*\n${item.kronologi}\n\n*Tindakan Dilakukan:*\n${item.tindakan}\n\n*Kerugian:*\n${item.kerugian}\n*Waktu Selesai:* ${item.waktuTindakan} WIB\n\n*Lampiran Dokumentasi Kejadian:*\n${item.fotoKejadian}\n\nDemikian laporan kejadian yang dapat disampaikan. Terimakasih.`;
             window.open('https://wa.me/?text=' + encodeURIComponent(waText), '_blank');
-            
-            navigateView('data-kejadian');
+
+            if (btnSubmit) btnSubmit.disabled = false;
+            showToast('Laporan Kejadian berhasil dikirim & disimpan!', 'success');
             document.getElementById('formKejadian').reset();
-            initDefaultDates();
             autoFillForms();
+            navigateView('data-kejadian');
         }
 
-        function submitPnp(e) { 
-            e.preventDefault(); 
+        function sendWAKejadian(idx) {
+            const d = dataKejadianList[idx];
+            if(!d) return;
+            const greeting = getWhatsappGreeting(d.waktu);
+            const longDate = formatWA_Date(d.hariTgl);
+            const waText = `*${greeting}*\n\nIzin melaporkan *Kejadian* di area LRT Jakarta.\n\n\`\`\`Hari/Tanggal :\`\`\` ${longDate}\n\`\`\`Waktu        :\`\`\` ${d.waktu} WIB\n\`\`\`Lokasi       :\`\`\` ${d.lokasi}\n\`\`\`Petugas      :\`\`\` ${d.petugas}\n\n*Kronologi Kejadian:*\n${d.kronologi}\n\n*Tindakan Dilakukan:*\n${d.tindakan}\n\n*Kerugian:*\n${d.kerugian}\n*Waktu Selesai:* ${d.waktuTindakan} WIB\n\nDemikian laporan kejadian yang dapat disampaikan. Terimakasih.`;
+            window.open('https://wa.me/?text=' + encodeURIComponent(waText), '_blank');
+        }
+
+        async function submitPnp(e) {
+            e.preventDefault();
+            showToast('Menyimpan data dan mengunggah foto ke Google Drive, harap tunggu...', 'info');
+            const btnSubmit = document.querySelector('#formPnp button[type="submit"]:last-child');
+            if (btnSubmit) btnSubmit.disabled = true;
+
             const item = {
                 hariTgl: document.getElementById('pnpHariTgl').value,
-                shift: document.getElementById('pnpShift').value,
-                regu: document.getElementById('pnpRegu').value,
-                jamDinas: document.getElementById('pnpJamDinas').value,
                 jam: document.getElementById('pnpJam').value,
                 noLrv: document.getElementById('pnpNoLrv').value,
                 namaAsp: document.getElementById('pnpNamaAsp').value,
@@ -2582,81 +3036,98 @@ Demikian Laporan Checklist Keberangkatan Kereta Pertama yang beroperasi hari ini
                 keterangan: document.getElementById('pnpKeterangan').value,
                 fotoPnp: document.getElementById('prevFotoPnp').value
             };
+
+            const res = await callBackend('savePnp', item);
+            if(res && res.status === 'success' && res.data) {
+                item.fotoPnp = res.data.fotoPnp;
+            }
+
             dataPnpList.unshift(item);
             saveRealDataCache();
             renderAllTables();
-            showToast('Laporan PNP Disimpan', 'success');
-            
+            forceSync(true);
+
             const greeting = getWhatsappGreeting(item.jam);
             const longDate = formatWA_Date(item.hariTgl);
-            const shiftLabel = item.shift === '1' ? 'Pagi' : 'Siang';
-            
-            const waText = `*${greeting}*\n\nIzin melaporkan *Jumlah Penumpang (PNP)* yang berada di dalam kereta.\n\n\`\`\`Hari/Tanggal :\`\`\` ${longDate}\n\`\`\`Jam          :\`\`\` ${item.jam} WIB\n\`\`\`Shift        :\`\`\` ${shiftLabel} (${item.jamDinas})\n\`\`\`No LRV       :\`\`\` ${item.noLrv}\n\`\`\`Nama Walka   :\`\`\` ${item.namaWalka}\n\n*Total PNP:* ${item.jumlah} Orang\n\n*Keterangan:*\n${item.keterangan}\n\nDemikian Laporan Jumlah Penumpang. Terimakasih.`;
+            const waText = `*${greeting}*\n\nIzin melaporkan *Jumlah Penumpang (PNP)* yang berada di dalam kereta.\n\n\`\`\`Hari/Tanggal :\`\`\` ${longDate}\n\`\`\`Jam          :\`\`\` ${item.jam} WIB\n\`\`\`No LRV       :\`\`\` ${item.noLrv}\n\`\`\`Nama Walka   :\`\`\` ${item.namaWalka}\n\n*Total PNP:* ${item.jumlah} Orang\n\n*Keterangan:*\n${item.keterangan}\n\n*Lampiran Dokumentasi:*\n${item.fotoPnp}\n\nDemikian Laporan Jumlah Penumpang. Terimakasih.`;
             window.open('https://wa.me/?text=' + encodeURIComponent(waText), '_blank');
-            
-            navigateView('data-pnp');
+
+            if (btnSubmit) btnSubmit.disabled = false;
+            showToast('Laporan Jumlah PNP berhasil dikirim & disimpan!', 'success');
             document.getElementById('formPnp').reset();
-            initDefaultDates();
             autoFillForms();
+            navigateView('data-pnp');
         }
 
-        let mockAgents = [
-            { name: "Dimas Aditya", regu: "Regu 1", pathIdx: 0, dir: 1 },
-            { name: "Budi Santoso", regu: "Regu 2", pathIdx: 15, dir: 1 },
-            { name: "Indra Gunawan", regu: "Regu 3", pathIdx: 30, dir: -1 }
-        ];
+        function sendWAPnp(idx) {
+            const d = dataPnpList[idx];
+            if(!d) return;
+            const greeting = getWhatsappGreeting(d.jam);
+            const longDate = formatWA_Date(d.hariTgl);
+            const waText = `*${greeting}*\n\nIzin melaporkan *Jumlah Penumpang (PNP)* yang berada di dalam kereta.\n\n\`\`\`Hari/Tanggal :\`\`\` ${longDate}\n\`\`\`Jam          :\`\`\` ${d.jam} WIB\n\`\`\`No LRV       :\`\`\` ${d.noLrv}\n\`\`\`Nama Walka   :\`\`\` ${d.namaWalka}\n\n*Total PNP:* ${d.jumlah} Orang\n\n*Keterangan:*\n${d.keterangan}\n\nDemikian Laporan Jumlah Penumpang. Terimakasih.`;
+            window.open('https://wa.me/?text=' + encodeURIComponent(waText), '_blank');
+        }
 
-        function startLiveGpsTracking() {
-            if (!navigator.geolocation) {
-                console.warn("GPS Tidak Didukung di perangkat ini.");
-                return;
+        async function submitPetugas(e) {
+            e.preventDefault();
+            showToast('Membuat anggota & upload foto, harap tunggu...', 'info');
+            const item = {
+                foto: document.getElementById('prevFotoPetugas') ? document.getElementById('prevFotoPetugas').value : '',
+                banner: document.getElementById('prevBannerPetugas') ? document.getElementById('prevBannerPetugas').value : DEFAULT_BANNER_URL,
+                nama: document.getElementById('petNama').value,
+                noId: document.getElementById('petNoId').value,
+                regu: document.getElementById('petRegu').value,
+                jabatan: document.getElementById('petJabatan').value,
+                jobdesk: document.getElementById('petJobdesk') ? document.getElementById('petJobdesk').value : '',
+                alamat: document.getElementById('petAlamat') ? document.getElementById('petAlamat').value : '',
+                noHp: document.getElementById('petNoHp') ? document.getElementById('petNoHp').value : '',
+                noKta: document.getElementById('petNoKta') ? document.getElementById('petNoKta').value : '',
+                noIjazah: document.getElementById('petNoIjazah') ? document.getElementById('petNoIjazah').value : '',
+                email: document.getElementById('petEmail') ? document.getElementById('petEmail').value : '',
+                password: document.getElementById('petPassword') ? document.getElementById('petPassword').value : ''
+            };
+            dataPetugasList.push(item);
+            saveRealDataCache();
+            renderAllTables();
+            await callBackend('savePetugas', item);
+            forceSync(true);
+            document.getElementById('formPetugas').reset();
+            showToast(`Personil ${item.nama} (${item.regu}) berhasil ditambahkan!`, 'success');
+            navigateView('menu-petugas');
+        }
+
+        function initDefaultDates() {
+            const today = new Date();
+            flatpickr("#patHariTgl, #kejHariTgl, #pnpHariTgl", {
+                locale: "id",
+                dateFormat: "d/m/Y",
+                defaultDate: today,
+                disableMobile: true
+            });
+            flatpickr("#patJam, #kejWaktu, #kejWaktuTindakan, #pnpJam", {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true,
+                defaultDate: today,
+                disableMobile: true
+            });
+        }
+
+        window.onload = function() {
+            initDefaultDates();
+            initScheduleData();
+            renderCalendar();
+            renderAllTables();
+            
+            if (currentUser) {
+                enterApplication(`Selamat datang kembali, ${currentUser.name}!`);
+                navigateView('maps');
             }
-            if (watchPositionId !== null) navigator.geolocation.clearWatch(watchPositionId);
 
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    myLatestLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                    updateUserGpsMarker(pos.coords.latitude, pos.coords.longitude);
-                    syncLiveLocations();
-                },
-                () => {},
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-
-            watchPositionId = navigator.geolocation.watchPosition(
-                (pos) => {
-                    myLatestLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                    updateUserGpsMarker(pos.coords.latitude, pos.coords.longitude);
-                    syncLiveLocations();
-                },
-                () => {},
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
-            );
-
-            // Simulasi pergerakan titik GPS Walka lain (Kereta berjalan maju mundur sepanjang rute LRTJ)
-            if(gpsIntervalId) clearInterval(gpsIntervalId);
-            gpsIntervalId = setInterval(() => {
-                const mockLocations = {};
-                mockAgents.forEach(agent => {
-                    agent.pathIdx += agent.dir;
-                    if (agent.pathIdx >= lrtRoutePath2026.length - 1) {
-                        agent.pathIdx = lrtRoutePath2026.length - 1;
-                        agent.dir = -1; // Balik arah di stasiun Manggarai
-                    } else if (agent.pathIdx <= 0) {
-                        agent.pathIdx = 0;
-                        agent.dir = 1; // Balik arah di stasiun Pegangsaan
-                    }
-                    
-                    const coord = lrtRoutePath2026[agent.pathIdx];
-                    mockLocations[agent.name] = { 
-                        lat: coord[0] + (Math.random() * 0.0001 - 0.00005), 
-                        lng: coord[1] + (Math.random() * 0.0001 - 0.00005), 
-                        regu: agent.regu 
-                    };
-                });
-                renderLiveUsers(mockLocations);
-                syncLiveLocations(); // Ping ke server asli jika ada
-            }, 3000); // Sinkronisasi setiap 3 detik untuk simulasi pergerakan Real-Time
-        }
-
-        // --- MAPS UI CONTROLS (SEARCH & FULLSCREEN) ---
+            // Otomatis tarik data real dari Google Spreadsheet saat aplikasi dibuka
+            forceSync(true);
+        };
+    </script>
+</body>
+</html>
