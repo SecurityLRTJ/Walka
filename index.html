@@ -1004,6 +1004,7 @@
                                 <thead class="bg-slate-200 text-slate-700 uppercase text-[11px]">
                                     <tr>
                                         <th class="p-3">No</th>
+                                        <th class="p-3 text-center">Foto</th>
                                         <th class="p-3">Nama</th>
                                         <th class="p-3">Kelompok</th>
                                         <th class="p-3">Jabatan</th>
@@ -1019,6 +1020,46 @@
                 <!-- MAPS -->
                 <section id="view-maps" class="view-section hidden w-full h-full relative z-20 bg-slate-900 m-0 p-0">
                     <div id="mapContainer" class="absolute inset-0 z-10"></div>
+                    
+                    <!-- Floating Controls Group (Search & Fullscreen) tersusun vertikal presisi -->
+                    <div class="absolute top-4 right-4 sm:top-5 sm:right-5 z-[1000] flex flex-col items-end gap-3 pointer-events-none">
+                        
+                        <!-- Panel Navigasi / Search Maps -->
+                        <div id="routePanel" class="pointer-events-auto bg-white/95 backdrop-blur-xl rounded-2xl shadow-lg border border-slate-200 transition-all duration-300 w-11 h-11 overflow-hidden flex flex-col relative">
+                            <!-- Tombol Toggle Buka Tutup Panel -->
+                            <button type="button" onclick="toggleRoutePanel()" id="btnOpenRoute" class="absolute top-0 right-0 w-11 h-11 flex items-center justify-center text-slate-600 hover:text-blue-600 transition-colors shrink-0 outline-none z-20 bg-transparent" title="Navigasi Rute">
+                                <i class="fa-solid fa-directions text-lg"></i>
+                            </button>
+                            
+                            <!-- Form Navigasi Rute (Expandable) -->
+                            <div id="routeFormContainer" class="opacity-0 hidden flex-col gap-2.5 p-4 pt-10 w-full transition-opacity duration-300 z-10">
+                                <h4 class="text-[11px] font-extrabold text-slate-800 uppercase tracking-wider mb-1">Pencarian & Rute</h4>
+                                <div class="flex items-center gap-3">
+                                    <div class="flex flex-col items-center gap-1 w-4">
+                                        <i class="fa-regular fa-circle-dot text-blue-500 text-[10px]"></i>
+                                        <div class="w-0.5 h-6 bg-slate-300 rounded"></div>
+                                        <i class="fa-solid fa-location-dot text-rose-500 text-[12px]"></i>
+                                    </div>
+                                    <div class="flex-1 flex flex-col gap-2">
+                                        <input type="text" id="routeOrigin" value="Lokasi Saat Ini" class="w-full bg-slate-100 rounded-lg border border-slate-200 text-xs font-semibold p-2.5 outline-none focus:border-blue-500 focus:bg-white transition-colors" placeholder="Pilih Titik Awal...">
+                                        <input type="text" id="routeDest" onkeypress="if(event.key === 'Enter') calculateRoute()" class="w-full bg-slate-100 rounded-lg border border-slate-200 text-xs font-semibold p-2.5 outline-none focus:border-rose-500 focus:bg-white transition-colors" placeholder="Cari stasiun / lokasi tujuan...">
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 mt-2">
+                                    <button type="button" onclick="clearRoute()" class="px-4 py-2 bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200 text-xs font-bold rounded-xl transition-colors">Reset</button>
+                                    <button type="button" onclick="calculateRoute()" class="flex-1 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition shadow-md shadow-blue-500/30 flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-route"></i> Mulai Navigasi
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Fullscreen Toggle Button -->
+                        <button type="button" onclick="toggleNavFootbar()" id="btnToggleNavFoot" class="pointer-events-auto w-11 h-11 flex items-center justify-center bg-white/95 backdrop-blur-xl border border-slate-200 text-slate-600 hover:text-rose-600 hover:shadow-xl hover:border-rose-300 rounded-full shadow-lg transition-all active:scale-95" title="Mode Layar Penuh Peta">
+                            <i class="fa-solid fa-expand text-base" id="iconToggleNavFoot"></i>
+                        </button>
+                        
+                    </div>
                 </section>
 
             </main>
@@ -1741,79 +1782,194 @@
             }, 5000);
         }
 
-        // --- MAPS UI CONTROLS ---
-        function toggleMapSearch() {
-            const container = document.getElementById('searchContainer');
-            const input = document.getElementById('mapSearchInput');
-            if (!isSearchExpanded) {
-                isSearchExpanded = true;
-                container.classList.replace('w-11', 'w-64');
-                container.classList.add('sm:w-80');
-                input.classList.replace('w-0', 'w-full');
-                input.classList.replace('opacity-0', 'opacity-100');
-                input.classList.replace('px-0', 'pl-4');
-                setTimeout(() => input.focus(), 150);
+        // --- MAPS UI CONTROLS (SEARCH & FULLSCREEN) ---
+        let currentRouteLayer = null;
+        let routeMarkers = [];
+        let isRoutePanelExpanded = false;
+
+        function toggleRoutePanel() {
+            const panel = document.getElementById('routePanel');
+            const form = document.getElementById('routeFormContainer');
+            const btn = document.getElementById('btnOpenRoute');
+            
+            isRoutePanelExpanded = !isRoutePanelExpanded;
+            if (isRoutePanelExpanded) {
+                panel.classList.replace('w-11', 'w-72');
+                panel.classList.replace('h-11', 'h-auto');
+                panel.classList.add('sm:w-80');
+                form.classList.remove('hidden');
+                setTimeout(() => {
+                    form.classList.replace('opacity-0', 'opacity-100');
+                    form.classList.add('flex');
+                    document.getElementById('routeDest').focus();
+                }, 150);
+                btn.innerHTML = '<i class="fa-solid fa-xmark text-lg"></i>';
+                btn.classList.replace('text-slate-600', 'text-rose-600');
             } else {
-                if (input.value.trim() !== '') {
-                    executeMapSearch(input.value.trim());
-                } else {
-                    isSearchExpanded = false;
-                    container.classList.replace('w-64', 'w-11');
-                    container.classList.remove('sm:w-80');
-                    input.classList.replace('w-full', 'w-0');
-                    input.classList.replace('opacity-100', 'opacity-0');
-                    input.classList.replace('pl-4', 'px-0');
-                }
+                form.classList.replace('opacity-100', 'opacity-0');
+                setTimeout(() => {
+                    form.classList.add('hidden');
+                    form.classList.remove('flex');
+                    panel.classList.replace('w-72', 'w-11');
+                    panel.classList.replace('h-auto', 'h-11');
+                    panel.classList.remove('sm:w-80');
+                    btn.innerHTML = '<i class="fa-solid fa-directions text-lg"></i>';
+                    btn.classList.replace('text-rose-600', 'text-slate-600');
+                }, 150);
             }
         }
 
-        function handleMapSearch(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const q = document.getElementById('mapSearchInput').value.trim();
-                if (q) executeMapSearch(q);
-            }
-        }
-
-        async function executeMapSearch(query) {
-            if (!mapInstance) return;
+        async function geocodeAddress(query) {
+            // 1. Cek apakah cocok dengan nama 11 Stasiun LRTJ terlebih dahulu
             const matchedStation = lrtStationsData.find(s => s.display.toLowerCase().includes(query.toLowerCase()));
             if (matchedStation) {
-                mapInstance.flyTo([matchedStation.lat, matchedStation.lng], 16);
-                showToast(`Menampilkan ${matchedStation.display}`, 'success');
-                return;
+                return { lat: matchedStation.lat, lng: matchedStation.lng, label: matchedStation.display };
             }
 
+            // 2. Gunakan Google Maps Geocoding API
             try {
                 const gRes = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_MAPS_API_KEY}`);
                 const gData = await gRes.json();
                 if (gData.status === 'OK' && gData.results.length > 0) {
-                    const loc = gData.results[0].geometry.location;
-                    placeSearchMarker(loc.lat, loc.lng, gData.results[0].formatted_address);
-                    return;
+                    return {
+                        lat: gData.results[0].geometry.location.lat,
+                        lng: gData.results[0].geometry.location.lng,
+                        label: gData.results[0].formatted_address
+                    };
                 }
             } catch (e) {}
 
+            // 3. Fallback ke OpenStreetMap Nominatim
             try {
                 const nRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
                 const nData = await nRes.json();
                 if (nData && nData.length > 0) {
-                    placeSearchMarker(parseFloat(nData[0].lat), parseFloat(nData[0].lon), nData[0].display_name);
-                } else {
-                    showToast('Lokasi tidak ditemukan.', 'error');
+                    return {
+                        lat: parseFloat(nData[0].lat),
+                        lng: parseFloat(nData[0].lon),
+                        label: nData[0].display_name
+                    };
                 }
+            } catch (err) {}
+            
+            return null; // Tidak ditemukan
+        }
+
+        async function calculateRoute() {
+            if (!mapInstance) return;
+            const originVal = document.getElementById('routeOrigin').value.trim();
+            const destVal = document.getElementById('routeDest').value.trim();
+            
+            if (!destVal) {
+                showToast('Masukkan lokasi tujuan terlebih dahulu.', 'error');
+                return;
+            }
+
+            showToast('Mencari rute navigasi terbaik...', 'info');
+
+            // Set Titik Awal
+            let originCoord = null;
+            if (originVal.toLowerCase() === 'lokasi saat ini' || originVal === '') {
+                if (lastKnownUserLat !== null && lastKnownUserLng !== null) {
+                    originCoord = { lat: lastKnownUserLat, lng: lastKnownUserLng, label: 'Lokasi Anda (GPS)' };
+                } else {
+                    showToast('Lokasi GPS Anda belum ditemukan, pastikan GPS aktif.', 'error');
+                    return;
+                }
+            } else {
+                originCoord = await geocodeAddress(originVal);
+            }
+
+            if (!originCoord) {
+                showToast('Lokasi titik awal tidak ditemukan.', 'error');
+                return;
+            }
+
+            // Set Titik Tujuan
+            const destCoord = await geocodeAddress(destVal);
+            if (!destCoord) {
+                showToast('Lokasi tujuan tidak ditemukan.', 'error');
+                return;
+            }
+
+            // Fetch Route from OSRM API (Gratis tanpa key)
+            try {
+                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${originCoord.lng},${originCoord.lat};${destCoord.lng},${destCoord.lat}?overview=full&geometries=geojson`;
+                const routeRes = await fetch(osrmUrl);
+                const routeData = await routeRes.json();
+
+                if (routeData.code !== 'Ok' || !routeData.routes || routeData.routes.length === 0) {
+                    showToast('Rute jalan tidak ditemukan untuk lokasi ini.', 'error');
+                    return;
+                }
+
+                // Bersihkan rute lama jika ada
+                clearRoute();
+
+                const routeGeoJSON = routeData.routes[0].geometry;
+                const distanceKm = (routeData.routes[0].distance / 1000).toFixed(2);
+                const durationMin = Math.round(routeData.routes[0].duration / 60);
+
+                // Gambar garis rute (Polyline)
+                currentRouteLayer = L.geoJSON(routeGeoJSON, {
+                    style: {
+                        color: '#3b82f6', // blue-500
+                        weight: 6,
+                        opacity: 0.85,
+                        lineJoin: 'round'
+                    }
+                }).addTo(mapInstance);
+
+                // Tambahkan Marker Pin
+                const startIcon = L.divIcon({ className: '', html: '<div style="background:#3b82f6; width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow:0 0 5px rgba(0,0,0,0.5);"></div>', iconSize: [16,16], iconAnchor: [8,8] });
+                const endIcon = L.divIcon({ className: '', html: '<div style="background:#e11d48; width:28px; height:28px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-location-dot text-white text-[12px]"></i></div>', iconSize: [28,28], iconAnchor: [14,14], popupAnchor: [0, -14] });
+
+                const m1 = L.marker([originCoord.lat, originCoord.lng], {icon: startIcon}).addTo(mapInstance).bindPopup(`<div class="text-xs font-bold text-slate-800 mb-1"><span class="text-blue-600">Start:</span> ${originCoord.label}</div>`);
+                const m2 = L.marker([destCoord.lat, destCoord.lng], {icon: endIcon}).addTo(mapInstance).bindPopup(`
+                    <div class="min-w-[140px] text-center p-1">
+                        <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tujuan</div>
+                        <div class="text-xs font-extrabold text-slate-800 mb-2 leading-tight">${destCoord.label}</div>
+                        <div class="flex items-center justify-center gap-2 text-xs bg-blue-50 text-blue-800 p-1.5 rounded-lg border border-blue-100 font-semibold">
+                            <span><i class="fa-solid fa-route"></i> ${distanceKm} km</span>
+                            <span>•</span>
+                            <span><i class="fa-solid fa-clock"></i> ${durationMin} mnt</span>
+                        </div>
+                    </div>
+                `).openPopup();
+                
+                routeMarkers.push(m1, m2);
+
+                // Posisikan kamera agar seluruh rute terlihat
+                mapInstance.fitBounds(currentRouteLayer.getBounds(), { padding: [50, 50] });
+                showToast(`Rute Ditemukan! (Jarak: ${distanceKm} km | Waktu: ${durationMin} menit)`, 'success');
+                
+                // Jika di mobile, tutup panel otomatis agar maps terlihat penuh
+                if (window.innerWidth < 768 && isRoutePanelExpanded) {
+                    toggleRoutePanel();
+                }
+
             } catch (err) {
-                showToast('Gagal melakukan pencarian lokasi.', 'error');
+                showToast('Terjadi kesalahan koneksi saat mengambil rute jalan.', 'error');
             }
         }
 
-        function placeSearchMarker(lat, lng, label) {
-            if (searchMarker) mapInstance.removeLayer(searchMarker);
-            searchMarker = L.marker([lat, lng]).addTo(mapInstance)
-                .bindPopup(`<div class="text-xs font-bold text-slate-800">${label}</div>`)
-                .openPopup();
-            mapInstance.flyTo([lat, lng], 16);
-            showToast('Lokasi ditemukan!', 'success');
+        function clearRoute() {
+            if (currentRouteLayer && mapInstance) {
+                mapInstance.removeLayer(currentRouteLayer);
+                currentRouteLayer = null;
+            }
+            routeMarkers.forEach(m => {
+                if(mapInstance) mapInstance.removeLayer(m);
+            });
+            routeMarkers = [];
+            
+            const destInput = document.getElementById('routeDest');
+            if (destInput) destInput.value = '';
+            
+            // Fokus kembali ke posisi user jika ada, atau reset view
+            if (lastKnownUserLat !== null && lastKnownUserLng !== null && mapInstance) {
+                mapInstance.setView([lastKnownUserLat, lastKnownUserLng], 15);
+            }
         }
 
         function toggleNavFootbar() {
@@ -1906,10 +2062,20 @@
             // Render Petugas
             let html = '';
             dataPetugasList.forEach((d,i) => {
-                html += `<tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"><td class="p-3">${i+1}</td><td class="p-3 font-bold text-slate-800 dark:text-white">${d.nama}</td><td class="p-3"><span class="bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded text-[10px] font-bold">${d.regu}</span></td><td class="p-3">${d.jabatan}</td><td class="p-3 text-center text-rose-600 font-bold cursor-pointer hover:underline" onclick="deleteItem('petugas', ${i})"><i class="fa-solid fa-trash-can"></i></td></tr>`;
+                const photoUrl = d.foto ? extractImageUrl(d.foto) : `https://placehold.co/100x100/e11d48/ffffff?text=${d.nama.charAt(0)}`;
+                html += `<tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <td class="p-3">${i+1}</td>
+                    <td class="p-3 text-center">
+                        <img src="${photoUrl}" alt="${d.nama}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-slate-200 inline-block">
+                    </td>
+                    <td class="p-3 font-bold text-slate-800 dark:text-white">${d.nama}</td>
+                    <td class="p-3"><span class="bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded text-[10px] font-bold">${d.regu}</span></td>
+                    <td class="p-3">${d.jabatan}</td>
+                    <td class="p-3 text-center text-rose-600 font-bold cursor-pointer hover:underline" onclick="deleteItem('petugas', ${i})"><i class="fa-solid fa-trash-can"></i></td>
+                </tr>`;
             });
             const tbody = document.getElementById('tbodyPetugas');
-            if(tbody) { tbody.innerHTML = html || `<tr><td colspan="5" class="p-4 text-center text-slate-500">Tidak ada data</td></tr>`; }
+            if(tbody) { tbody.innerHTML = html || `<tr><td colspan="6" class="p-4 text-center text-slate-500">Tidak ada data</td></tr>`; }
         }
 
         function deleteItem(type, idx) {
