@@ -619,7 +619,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1">Upload Foto Patroli</label>
-                                    <div onclick="showToast('Fitur upload foto segera hadir','info')" class="w-full border-2 border-dashed border-slate-300 rounded-xl p-3 text-center cursor-pointer hover:bg-rose-50 hover:border-rose-300 transition flex flex-col justify-center min-h-[104px]">
+                                    <div onclick="openPhotoSource('patroli')" class="w-full border-2 border-dashed border-slate-300 rounded-xl p-3 text-center cursor-pointer hover:bg-rose-50 hover:border-rose-300 transition flex flex-col justify-center min-h-[104px]">
                                         <img id="imgPreviewPatroli" src="" class="hidden max-h-24 mx-auto rounded object-contain mb-1 shadow-sm">
                                         <span id="textPreviewPatroli" class="text-xs text-slate-500 font-semibold flex flex-col items-center gap-1.5">
                                             <i class="fa-solid fa-camera text-xl text-slate-400"></i>
@@ -722,7 +722,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1">Upload Foto Kejadian</label>
-                                    <div onclick="showToast('Fitur upload foto segera hadir','info')" class="w-full border-2 border-dashed border-slate-300 rounded-xl p-3 text-center cursor-pointer hover:bg-rose-50 hover:border-rose-300 transition flex flex-col justify-center min-h-[90px]">
+                                    <div onclick="openPhotoSource('kejadian')" class="w-full border-2 border-dashed border-slate-300 rounded-xl p-3 text-center cursor-pointer hover:bg-rose-50 hover:border-rose-300 transition flex flex-col justify-center min-h-[90px]">
                                         <img id="imgPreviewKejadian" src="" class="hidden max-h-24 mx-auto rounded object-contain mb-1 shadow-sm">
                                         <span id="textPreviewKejadian" class="text-xs text-slate-500 font-semibold flex flex-col items-center gap-1.5">
                                             <i class="fa-solid fa-camera text-xl text-slate-400"></i>
@@ -733,7 +733,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1">Upload Foto Tindakan</label>
-                                    <div onclick="showToast('Fitur upload foto segera hadir','info')" class="w-full border-2 border-dashed border-slate-300 rounded-xl p-3 text-center cursor-pointer hover:bg-emerald-50 hover:border-emerald-300 transition flex flex-col justify-center min-h-[90px]">
+                                    <div onclick="openPhotoSource('tindakan')" class="w-full border-2 border-dashed border-slate-300 rounded-xl p-3 text-center cursor-pointer hover:bg-emerald-50 hover:border-emerald-300 transition flex flex-col justify-center min-h-[90px]">
                                         <img id="imgPreviewTindakan" src="" class="hidden max-h-24 mx-auto rounded object-contain mb-1 shadow-sm">
                                         <span id="textPreviewTindakan" class="text-xs text-slate-500 font-semibold flex flex-col items-center gap-1.5">
                                             <i class="fa-solid fa-camera text-xl text-slate-400"></i>
@@ -841,7 +841,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1">Upload Foto LRV</label>
-                                    <div onclick="showToast('Fitur upload foto segera hadir','info')" class="w-full border-2 border-dashed border-slate-300 rounded-xl p-3 text-center cursor-pointer hover:bg-sky-50 hover:border-sky-300 transition flex flex-col justify-center min-h-[104px]">
+                                    <div onclick="openPhotoSource('pnp')" class="w-full border-2 border-dashed border-slate-300 rounded-xl p-3 text-center cursor-pointer hover:bg-sky-50 hover:border-sky-300 transition flex flex-col justify-center min-h-[104px]">
                                         <img id="imgPreviewPnp" src="" class="hidden max-h-24 mx-auto rounded object-contain mb-1 shadow-sm">
                                         <span id="textPreviewPnp" class="text-xs text-slate-500 font-semibold flex flex-col items-center gap-1.5">
                                             <i class="fa-solid fa-camera text-xl text-slate-400"></i>
@@ -995,6 +995,22 @@
                                         <option value="Admin">Admin</option>
                                     </select>
                                 </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Foto Petugas (Opsional)</label>
+                                    <div onclick="openPhotoSource('petugas')" class="w-full flex items-center justify-between px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition">
+                                        <span id="textPreviewPetugas" class="text-slate-600 font-semibold text-xs"><i class="fa-solid fa-camera mr-2 text-slate-400"></i>Pilih Foto Profil</span>
+                                        <img id="imgPreviewPetugas" src="" class="hidden w-6 h-6 rounded-full object-cover shadow-sm">
+                                    </div>
+                                    <input type="hidden" id="prevFotoPetugas" value="https://placehold.co/120x120/0f172a/ffffff?text=WALKA">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Foto Banner (Opsional)</label>
+                                    <div onclick="openPhotoSource('banner-petugas')" class="w-full flex items-center justify-between px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition">
+                                        <span id="textPreviewBannerPetugas" class="text-slate-600 font-semibold text-xs"><i class="fa-solid fa-image mr-2 text-slate-400"></i>Pilih Foto Banner</span>
+                                        <img id="imgPreviewBannerPetugas" src="" class="hidden w-10 h-6 rounded object-cover shadow-sm">
+                                    </div>
+                                    <input type="hidden" id="prevBannerPetugas" value="https://cms.disway.id/uploads/fbb013a3f898a7d5855f9b8111afc573.jpg">
+                                </div>
                             </div>
                             <div class="flex justify-end gap-2 pt-2">
                                 <button type="reset" class="px-5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600">Reset</button>
@@ -1075,6 +1091,11 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Tombol Lacak Kereta / Petugas Aktif (Icon Baru) -->
+                        <button type="button" onclick="centerOnActiveTrains()" id="btnTrackActiveTrains" class="pointer-events-auto w-11 h-11 flex items-center justify-center bg-white/95 backdrop-blur-xl border border-slate-200 text-slate-600 hover:text-rose-600 hover:shadow-xl hover:border-rose-300 rounded-full shadow-lg transition-all active:scale-95" title="Lacak Kereta & Walka Aktif">
+                            <i class="fa-solid fa-train-subway text-base"></i>
+                        </button>
                         
                         <!-- Fullscreen Toggle Button -->
                         <button type="button" onclick="toggleNavFootbar()" id="btnToggleNavFoot" class="pointer-events-auto w-11 h-11 flex items-center justify-center bg-white/95 backdrop-blur-xl border border-slate-200 text-slate-600 hover:text-rose-600 hover:shadow-xl hover:border-rose-300 rounded-full shadow-lg transition-all active:scale-95" title="Mode Layar Penuh Peta">
@@ -1131,6 +1152,34 @@
 
     <!-- ==================== BOTTOM SHEETS (MOBILE MENUS) ==================== -->
     <div id="sheetBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[2100] hidden opacity-0 transition-opacity duration-300" onclick="closeAllSheets()"></div>
+
+    <!-- ==================== MODAL POPUP PILIH SUMBER FOTO (TENGAH LAYAR & MELEBAR) ==================== -->
+    <div id="modalPhotoSource" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[2300] hidden items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div id="modalPhotoSourceContent" class="bg-white rounded-3xl w-full max-w-xl p-6 shadow-2xl border border-slate-200 transform scale-95 transition-transform duration-300 relative">
+            <button type="button" onclick="closePhotoSourceModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-rose-100 hover:text-rose-600 transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="font-extrabold mb-5 text-center text-lg text-slate-900">Pilih Sumber Foto</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <button type="button" onclick="triggerFileInput('camera')" class="flex flex-col items-center justify-center p-6 bg-rose-50 border border-rose-200 rounded-2xl hover:bg-rose-100 transition shadow-sm active:scale-95">
+                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm text-rose-600">
+                        <i class="fa-solid fa-camera text-3xl"></i>
+                    </div>
+                    <span class="text-sm font-extrabold text-rose-900">Kamera</span>
+                </button>
+                <button type="button" onclick="triggerFileInput('gallery')" class="flex flex-col items-center justify-center p-6 bg-sky-50 border border-sky-200 rounded-2xl hover:bg-sky-100 transition shadow-sm active:scale-95">
+                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm text-sky-600">
+                        <i class="fa-regular fa-images text-3xl"></i>
+                    </div>
+                    <span class="text-sm font-extrabold text-sky-900">Galeri</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global File Inputs -->
+    <input type="file" id="globalInputCamera" accept="image/*" capture="environment" class="hidden" onchange="handleGlobalFile(this)">
+    <input type="file" id="globalInputGallery" accept="image/*" class="hidden" onchange="handleGlobalFile(this)">
 
     <!-- Sheet 1: Walka (Menu Operasional) -->
     <div id="sheetWalka" class="fixed inset-x-0 bottom-0 z-[2110] bg-gradient-to-b from-rose-600/95 via-rose-900/95 to-slate-900/95 backdrop-blur-xl shadow-[0_-15px_50px_-5px_rgba(225,29,72,0.6)] border-t border-white/20 rounded-t-3xl transform translate-y-full transition-transform duration-300 flex flex-col pb-10 px-6 lg:hidden text-white">
@@ -1606,6 +1655,115 @@
             navFromSheet(viewKey);
         }
         
+        // ---------------- MODAL PILIH SUMBER FOTO (TENGAH LAYAR) ----------------
+        let currentUploadTarget = '';
+
+        function openPhotoSource(target) {
+            currentUploadTarget = target;
+            const modal = document.getElementById('modalPhotoSource');
+            const content = document.getElementById('modalPhotoSourceContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closePhotoSourceModal() {
+            const modal = document.getElementById('modalPhotoSource');
+            const content = document.getElementById('modalPhotoSourceContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 250);
+        }
+
+        function triggerFileInput(type) {
+            if (type === 'camera') {
+                document.getElementById('globalInputCamera').click();
+            } else {
+                document.getElementById('globalInputGallery').click();
+            }
+            closePhotoSourceModal();
+        }
+
+        function handleGlobalFile(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800; // Lebar maksimal gambar agar ringan
+                        const MAX_HEIGHT = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        
+                        let imgPreview, textPreview, hiddenInput;
+                        
+                        if (currentUploadTarget === 'patroli') {
+                            imgPreview = document.getElementById('imgPreviewPatroli');
+                            textPreview = document.getElementById('textPreviewPatroli');
+                            hiddenInput = document.getElementById('prevFotoPatroli');
+                        } else if (currentUploadTarget === 'kejadian') {
+                            imgPreview = document.getElementById('imgPreviewKejadian');
+                            textPreview = document.getElementById('textPreviewKejadian');
+                            hiddenInput = document.getElementById('prevFotoKejadian');
+                        } else if (currentUploadTarget === 'tindakan') {
+                            imgPreview = document.getElementById('imgPreviewTindakan');
+                            textPreview = document.getElementById('textPreviewTindakan');
+                            hiddenInput = document.getElementById('prevFotoTindakan');
+                        } else if (currentUploadTarget === 'pnp') {
+                            imgPreview = document.getElementById('imgPreviewPnp');
+                            textPreview = document.getElementById('textPreviewPnp');
+                            hiddenInput = document.getElementById('prevFotoPnp');
+                        } else if (currentUploadTarget === 'petugas') {
+                            imgPreview = document.getElementById('imgPreviewPetugas');
+                            textPreview = document.getElementById('textPreviewPetugas');
+                            hiddenInput = document.getElementById('prevFotoPetugas');
+                        } else if (currentUploadTarget === 'banner-petugas') {
+                            imgPreview = document.getElementById('imgPreviewBannerPetugas');
+                            textPreview = document.getElementById('textPreviewBannerPetugas');
+                            hiddenInput = document.getElementById('prevBannerPetugas');
+                        }
+
+                        if (imgPreview && hiddenInput) {
+                            imgPreview.src = dataUrl;
+                            imgPreview.classList.remove('hidden');
+                            hiddenInput.value = dataUrl;
+                            if (textPreview && !currentUploadTarget.includes('petugas')) {
+                                textPreview.classList.add('hidden');
+                            }
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
         function showToast(msg, type='info') {
             const container = document.getElementById('toastContainer');
             const t = document.createElement('div');
@@ -1739,17 +1897,7 @@
                 iconSize: [44, 44], iconAnchor: [22, 22], popupAnchor: [0, -22]
             });
 
-            const popupContent = `
-                <div style="text-align: center; min-width: 150px; padding: 2px;">
-                    <div style="font-size: 10px; font-weight: 800; color: #10b981; text-transform: uppercase;">● Navigasi GPS Aktif</div>
-                    <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-top: 2px;">${userName}</div>
-                    <div style="font-size: 11px; color: #64748b;">${userJabatan}</div>
-                    <div style="font-size: 10px; font-family: monospace; color: #94a3b8; margin-top: 4px;">${lat.toFixed(6)}, ${lng.toFixed(6)}</div>
-                </div>
-            `;
-
             let finalIcon = gpsAvatarIcon;
-            let finalPopup = popupContent;
 
             // Cek apakah ada keberangkatan LRT aktif untuk user saat ini di hari yang sama
             const todayStr = flatpickr.formatDate(new Date(), "d/m/Y");
@@ -1758,7 +1906,7 @@
             if (activeKeberangkatan) {
                 const lrvNum = activeKeberangkatan.noLrv;
                 const trainIconHtml = `
-                    <div class="gps-user-avatar" style="width: 54px; height: 54px; border-radius: 12px; border: 3px solid #f97316; background: #ffffff; overflow: hidden; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.55); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div class="gps-user-avatar cursor-pointer hover:scale-110 transition-transform" style="width: 54px; height: 54px; border-radius: 12px; border: 3px solid #f97316; background: #ffffff; overflow: hidden; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.55); display: flex; flex-direction: column; align-items: center; justify-content: center;">
                         <i class="fa-solid fa-train-subway text-rose-600 text-[20px]"></i>
                         <span style="font-size: 10px; font-weight: 900; color: #0f172a; margin-top: 2px; letter-spacing: -0.5px;">${lrvNum}</span>
                     </div>
@@ -1766,39 +1914,58 @@
                 finalIcon = L.divIcon({
                     className: 'custom-train-avatar',
                     html: trainIconHtml,
-                    iconSize: [54, 54], iconAnchor: [27, 27], popupAnchor: [0, -27]
+                    iconSize: [54, 54], iconAnchor: [27, 27]
                 });
-                
-                finalPopup = `
-                    <div style="text-align: center; min-width: 170px; padding: 4px;">
-                        <div style="font-size: 11px; font-weight: 800; color: #f97316; text-transform: uppercase;">● Sedang Mengawal ${lrvNum}</div>
-                        <div style="font-size: 14px; font-weight: 900; color: #0f172a; margin-top: 2px;">${userName}</div>
-                        <div style="font-size: 11px; color: #64748b; font-weight: bold;">Shift ${activeKeberangkatan.shift === '1' ? 'Pagi' : 'Siang'} (${activeKeberangkatan.jamDinas})</div>
-                        <button onclick="showActiveDetailPatroli()" style="margin-top: 10px; padding: 6px 10px; background: #e11d48; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 2px 5px rgba(225,29,72,0.4);">
-                            <i class="fa-solid fa-clipboard-list mr-1"></i> Detail Laporan
-                        </button>
-                    </div>
-                `;
             }
 
-            if (userGpsMarker) {
-                userGpsMarker.setLatLng([lat, lng]);
-                userGpsMarker.setIcon(finalIcon);
-                userGpsMarker.setPopupContent(finalPopup);
-            } else {
-                userGpsMarker = L.marker([lat, lng], { icon: finalIcon, zIndexOffset: 1000 })
-                    .addTo(mapInstance)
-                    .bindPopup(finalPopup);
+            if (!userGpsMarker) {
+                userGpsMarker = L.marker([lat, lng], { zIndexOffset: 1000 }).addTo(mapInstance);
                 mapInstance.setView([lat, lng], 15);
+            }
+            
+            userGpsMarker.setLatLng([lat, lng]);
+            userGpsMarker.setIcon(finalIcon);
+            
+            // Hapus event click & popup sebelumnya agar tidak tumpang tindih
+            userGpsMarker.off('click');
+            userGpsMarker.unbindPopup();
+            userGpsMarker.unbindTooltip();
+
+            if (activeKeberangkatan) {
+                // FUNGSI PINTASAN: Jika sedang mengawal, klik icon langsung membuka Detail Laporan Keberangkatan
+                userGpsMarker.bindTooltip(`
+                    <div class="text-center p-1">
+                        <div class="text-[11px] font-bold text-rose-600 uppercase">Mengawal ${activeKeberangkatan.noLrv}</div>
+                        <div class="text-[10px] font-semibold text-slate-600 mt-0.5">Klik ikon kereta untuk melihat laporan</div>
+                    </div>
+                `, { direction: 'top', offset: [0, -30], className: 'rounded-xl shadow-lg border border-slate-200 bg-white' });
+                
+                userGpsMarker.on('click', function() {
+                    showActiveDetailPatroli();
+                });
+            } else {
+                // Jika tidak mengawal, hanya tampilkan info petugas
+                const popupContent = `
+                    <div style="text-align: center; min-width: 150px; padding: 2px;">
+                        <div style="font-size: 10px; font-weight: 800; color: #10b981; text-transform: uppercase;">● Navigasi GPS Aktif</div>
+                        <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-top: 2px;">${userName}</div>
+                        <div style="font-size: 11px; color: #64748b;">${userJabatan}</div>
+                        <div style="font-size: 10px; font-family: monospace; color: #94a3b8; margin-top: 4px;">${lat.toFixed(6)}, ${lng.toFixed(6)}</div>
+                    </div>
+                `;
+                userGpsMarker.bindPopup(popupContent);
             }
         }
 
         function showActiveDetailPatroli() {
             const userName = currentUser ? currentUser.name : '';
             const todayStr = flatpickr.formatDate(new Date(), "d/m/Y");
+            // Cari indeks laporan keberangkatan hari ini yang cocok dengan nama user login
             const idx = dataPatroliList.findIndex(p => p.namaWalka === userName && p.hariTgl === todayStr);
             if(idx !== -1) {
                 showDetailPatroli(idx);
+            } else {
+                showToast('Tidak ada laporan keberangkatan yang sedang aktif.', 'error');
             }
         }
 
@@ -1896,6 +2063,35 @@
         let currentRouteLayer = null;
         let routeMarkers = [];
         let isRoutePanelExpanded = false;
+
+        function centerOnActiveTrains() {
+            if (!mapInstance) return;
+            const userName = currentUser ? currentUser.name : '';
+            const todayStr = flatpickr.formatDate(new Date(), "d/m/Y");
+            const activeKeberangkatan = dataPatroliList.find(p => p.namaWalka === userName && p.hariTgl === todayStr);
+
+            // Prioritas 1: Jika User login sedang mengawal kereta, fokuskan kamera ke titik dia
+            if (activeKeberangkatan && lastKnownUserLat !== null && lastKnownUserLng !== null) {
+                mapInstance.flyTo([lastKnownUserLat, lastKnownUserLng], 17, { animate: true, duration: 1.5 });
+                showToast(`Memusatkan lokasi Anda (Mengawal ${activeKeberangkatan.noLrv})`, 'success');
+            } 
+            // Prioritas 2: Jika ada teman/Walka lain yang sedang aktif, zoom out agar semua terlihat
+            else if (Object.keys(liveUserMarkers).length > 0) {
+                const markersArray = Object.values(liveUserMarkers);
+                if (userGpsMarker) markersArray.push(userGpsMarker);
+                
+                const group = new L.featureGroup(markersArray);
+                mapInstance.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 16 });
+                showToast('Menampilkan seluruh titik patroli Walka yang aktif.', 'info');
+            } 
+            // Prioritas 3: Jika tidak ada siapapun yang aktif (kondisi default)
+            else {
+                showToast('Belum ada pergerakan kereta atau petugas aktif saat ini.', 'error');
+                if (lastKnownUserLat !== null && lastKnownUserLng !== null) {
+                    mapInstance.flyTo([lastKnownUserLat, lastKnownUserLng], 15);
+                }
+            }
+        }
 
         function toggleRoutePanel() {
             const panel = document.getElementById('routePanel');
@@ -2108,6 +2304,15 @@
 
         // ---------------- RENDER & LOGIC ----------------
         function renderAllTables() {
+            // Render basic stat
+            document.getElementById('badgeCountPatroli').textContent = dataPatroliList.length;
+            document.getElementById('badgeCountKejadian').textContent = dataKejadianList.length;
+            document.getElementById('badgeCountPnp').textContent = dataPnpList.length;
+            const badgePetugas = document.getElementById('badgeCountPetugas');
+            if (badgePetugas) badgePetugas.textContent = dataPetugasList.length;
+
+            const isManagement = currentUser && (currentUser.regu === 'Management' || currentUser.jabatan === 'Admin' || currentUser.jabatan === 'Chief Security');
+
             // Render Patroli (Tampilan Ringkas)
             let phtml = '';
             dataPatroliList.forEach((d,i) => {
@@ -2120,9 +2325,12 @@
                     <td class="p-3 whitespace-nowrap font-mono text-slate-500">${d.kodeHt || '-'}</td>
                     <td class="p-3 text-center">
                         <div class="flex items-center justify-center gap-2">
-                            <button onclick="showDetailPatroli(${i})" class="text-blue-600 hover:underline font-bold text-xs" title="Lihat Detail Penuh">Detail</button>
+                            <button onclick="sendWAPatroli(${i})" class="text-emerald-500 hover:text-emerald-700" title="Kirim WA"><i class="fa-brands fa-whatsapp text-xl"></i></button>
+                            ${isManagement ? `
                             <span class="text-slate-300">|</span>
-                            <button onclick="deleteItem('patroli', ${i})" class="text-rose-600 hover:underline font-bold text-xs" title="Hapus">Hapus</button>
+                            <button onclick="showDetailPatroli(${i})" class="text-blue-500 hover:text-blue-700" title="Detail"><i class="fa-solid fa-circle-info text-xl"></i></button>
+                            <button onclick="deleteItem('patroli', ${i})" class="text-rose-500 hover:text-rose-700" title="Hapus"><i class="fa-solid fa-trash-can text-xl"></i></button>
+                            ` : ''}
                         </div>
                     </td>
                 </tr>`;
@@ -2142,7 +2350,16 @@
                     <td class="p-3 min-w-[200px] truncate">${d.tindakan || '-'}</td>
                     <td class="p-3 whitespace-nowrap">${d.kerugian || '-'}</td>
                     <td class="p-3 whitespace-nowrap">${d.waktuTindakan || '-'}</td>
-                    <td class="p-3 text-center text-rose-600 font-bold cursor-pointer hover:underline" onclick="deleteItem('kejadian', ${i})">Hapus</td>
+                    <td class="p-3 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="sendWAKejadian(${i})" class="text-emerald-500 hover:text-emerald-700" title="Kirim WA"><i class="fa-brands fa-whatsapp text-xl"></i></button>
+                            ${isManagement ? `
+                            <span class="text-slate-300">|</span>
+                            <button onclick="showDetailKejadian(${i})" class="text-blue-500 hover:text-blue-700" title="Detail"><i class="fa-solid fa-circle-info text-xl"></i></button>
+                            <button onclick="deleteItem('kejadian', ${i})" class="text-rose-500 hover:text-rose-700" title="Hapus"><i class="fa-solid fa-trash-can text-xl"></i></button>
+                            ` : ''}
+                        </div>
+                    </td>
                 </tr>`;
             });
             const tbodyKejadian = document.getElementById('tbodyKejadian');
@@ -2159,29 +2376,56 @@
                     <td class="p-3 whitespace-nowrap">${d.namaWalka || '-'}</td>
                     <td class="p-3 text-sky-600 font-bold whitespace-nowrap">${d.jumlah || '-'}</td>
                     <td class="p-3 min-w-[200px] truncate">${d.keterangan || '-'}</td>
-                    <td class="p-3 text-center text-rose-600 font-bold cursor-pointer hover:underline" onclick="deleteItem('pnp', ${i})">Hapus</td>
+                    <td class="p-3 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="sendWAPnp(${i})" class="text-emerald-500 hover:text-emerald-700" title="Kirim WA"><i class="fa-brands fa-whatsapp text-xl"></i></button>
+                            ${isManagement ? `
+                            <span class="text-slate-300">|</span>
+                            <button onclick="showDetailPnp(${i})" class="text-blue-500 hover:text-blue-700" title="Detail"><i class="fa-solid fa-circle-info text-xl"></i></button>
+                            <button onclick="deleteItem('pnp', ${i})" class="text-rose-500 hover:text-rose-700" title="Hapus"><i class="fa-solid fa-trash-can text-xl"></i></button>
+                            ` : ''}
+                        </div>
+                    </td>
                 </tr>`;
             });
             const tbodyPnp = document.getElementById('tbodyPnp');
             if(tbodyPnp) { tbodyPnp.innerHTML = pnphtml || `<tr><td colspan="8" class="p-4 text-center text-slate-500">Tidak ada data</td></tr>`; }
 
-            // Render Petugas
-            let html = '';
-            dataPetugasList.forEach((d,i) => {
-                const photoUrl = d.foto ? extractImageUrl(d.foto) : `https://placehold.co/100x100/e11d48/ffffff?text=${d.nama.charAt(0)}`;
-                html += `<tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
-                    <td class="p-3">${i+1}</td>
-                    <td class="p-3 text-center">
-                        <img src="${photoUrl}" alt="${d.nama}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-slate-200 inline-block">
-                    </td>
-                    <td class="p-3 font-bold text-slate-800 dark:text-white">${d.nama}</td>
-                    <td class="p-3"><span class="bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded text-[10px] font-bold">${d.regu}</span></td>
-                    <td class="p-3">${d.jabatan}</td>
-                    <td class="p-3 text-center text-rose-600 font-bold cursor-pointer hover:underline" onclick="deleteItem('petugas', ${i})"><i class="fa-solid fa-trash-can"></i></td>
+            // Render Petugas (Grouping)
+            const tbPetugas = document.getElementById('tbodyPetugas');
+            const filterVal = document.getElementById('filterReguSelect') ? document.getElementById('filterReguSelect').value : 'ALL';
+            const orderedGroups = ['Regu 1', 'Regu 2', 'Regu 3', 'Management'];
+            
+            let petugasHtml = '';
+            orderedGroups.forEach(groupName => {
+                if (filterVal !== 'ALL' && filterVal !== groupName) return;
+                
+                const items = dataPetugasList.filter(p => p.regu === groupName);
+                if (items.length === 0) return;
+
+                petugasHtml += `
+                <tr class="bg-slate-200 dark:bg-slate-700">
+                    <td colspan="6" class="p-2 font-bold text-slate-800 dark:text-white uppercase text-[10px]"><i class="fa-solid fa-users-viewfinder mr-2"></i> ${groupName} (${items.length} Personil)</td>
                 </tr>`;
+
+                items.forEach((d) => {
+                    const originalIndex = dataPetugasList.indexOf(d);
+                    const photoUrl = d.foto ? extractImageUrl(d.foto) : `https://placehold.co/100x100/e11d48/ffffff?text=${d.nama.charAt(0)}`;
+                    petugasHtml += `<tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
+                        <td class="p-3">${originalIndex+1}</td>
+                        <td class="p-3 text-center">
+                            <img src="${photoUrl}" alt="${d.nama}" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-slate-200 inline-block">
+                        </td>
+                        <td class="p-3 font-bold text-slate-800 dark:text-white">${d.nama}</td>
+                        <td class="p-3"><span class="bg-white dark:bg-slate-800 border border-slate-300 px-2 py-1 rounded text-[10px] font-bold">${d.regu}</span></td>
+                        <td class="p-3 font-medium">${d.jabatan}</td>
+                        <td class="p-3 text-center">
+                            ${isManagement ? `<button onclick="deleteItem('petugas', ${originalIndex})" class="text-rose-600 hover:text-rose-800 p-1" title="Hapus"><i class="fa-solid fa-trash-can text-lg"></i></button>` : `<i class="fa-solid fa-lock text-slate-300" title="Hanya Management"></i>`}
+                        </td>
+                    </tr>`;
+                });
             });
-            const tbody = document.getElementById('tbodyPetugas');
-            if(tbody) { tbody.innerHTML = html || `<tr><td colspan="6" class="p-4 text-center text-slate-500">Tidak ada data</td></tr>`; }
+            if(tbPetugas) { tbPetugas.innerHTML = petugasHtml || `<tr><td colspan="6" class="p-4 text-center text-slate-500">Tidak ada data</td></tr>`; }
         }
 
         function deleteItem(type, idx) {
@@ -2193,6 +2437,26 @@
         }
 
         // ---------------- FORMS ----------------
+        function getWhatsappGreeting(timeStr) {
+            if (!timeStr) return "Selamat Pagi Komandan";
+            const [h, m] = timeStr.split(':').map(Number);
+            const timeVal = h * 60 + (m || 0);
+            if (timeVal >= 1 && timeVal <= 11 * 60 + 30) return "Selamat Pagi Komandan";
+            if (timeVal >= 11 * 60 + 31 && timeVal <= 14 * 60 + 59) return "Selamat Siang Komandan";
+            if (timeVal >= 15 * 60 && timeVal <= 18 * 60) return "Selamat Sore Komandan";
+            return "Selamat Malam Komandan";
+        }
+
+        function formatWA_Date(dmyStr) {
+            if (!dmyStr) return "";
+            const [d, m, y] = dmyStr.split('/');
+            const dateObj = new Date(y, m - 1, d);
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            if(isNaN(dateObj.getTime())) return dmyStr;
+            return `${days[dateObj.getDay()]}, ${d} ${months[m - 1]} ${y}`;
+        }
+
         function submitPatroli(e) {
             e.preventDefault();
             const item = {
@@ -2336,41 +2600,63 @@ Demikian Laporan Checklist Keberangkatan Kereta Pertama yang beroperasi hari ini
             autoFillForms();
         }
 
-        function submitPetugas(e) {
-            e.preventDefault();
-            dataPetugasList.push({
-                nama: document.getElementById('petNama').value,
-                regu: document.getElementById('petRegu').value,
-                jabatan: document.getElementById('petJabatan').value,
-                email: 'user@lrt.co.id', // mockup
-                password: 'password'
-            });
-            saveRealDataCache();
-            showToast('Petugas berhasil ditambahkan', 'success');
-            navigateView('menu-petugas');
-            document.getElementById('formPetugas').reset();
-        }
+        let mockAgents = [
+            { name: "Dimas Aditya", regu: "Regu 1", pathIdx: 0, dir: 1 },
+            { name: "Budi Santoso", regu: "Regu 2", pathIdx: 15, dir: 1 },
+            { name: "Indra Gunawan", regu: "Regu 3", pathIdx: 30, dir: -1 }
+        ];
 
-        // ---------------- INIT ----------------
-        function initDefaultDates() {
-            const today = new Date();
-            flatpickr("#patHariTgl, #kejHariTgl, #pnpHariTgl", { locale: "id", dateFormat: "d/m/Y", defaultDate: today });
-            flatpickr("#patJam, #kejWaktu, #kejWaktuTindakan, #pnpJam", { enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true, defaultDate: today });
-        }
-
-        window.onload = function() {
-            initDefaultDates();
-            
-            if (currentUser) {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(() => startLiveGpsTracking(), () => startLiveGpsTracking(), { enableHighAccuracy: true });
-                }
-                enterApplication(`Selamat datang kembali, ${currentUser.name}!`);
-                setTimeout(() => navigateView('maps'), 100);
-            } else {
-                renderAllTables();
+        function startLiveGpsTracking() {
+            if (!navigator.geolocation) {
+                console.warn("GPS Tidak Didukung di perangkat ini.");
+                return;
             }
-        };
-    </script>
-</body>
-</html>
+            if (watchPositionId !== null) navigator.geolocation.clearWatch(watchPositionId);
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    myLatestLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    updateUserGpsMarker(pos.coords.latitude, pos.coords.longitude);
+                    syncLiveLocations();
+                },
+                () => {},
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+
+            watchPositionId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    myLatestLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    updateUserGpsMarker(pos.coords.latitude, pos.coords.longitude);
+                    syncLiveLocations();
+                },
+                () => {},
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+            );
+
+            // Simulasi pergerakan titik GPS Walka lain (Kereta berjalan maju mundur sepanjang rute LRTJ)
+            if(gpsIntervalId) clearInterval(gpsIntervalId);
+            gpsIntervalId = setInterval(() => {
+                const mockLocations = {};
+                mockAgents.forEach(agent => {
+                    agent.pathIdx += agent.dir;
+                    if (agent.pathIdx >= lrtRoutePath2026.length - 1) {
+                        agent.pathIdx = lrtRoutePath2026.length - 1;
+                        agent.dir = -1; // Balik arah di stasiun Manggarai
+                    } else if (agent.pathIdx <= 0) {
+                        agent.pathIdx = 0;
+                        agent.dir = 1; // Balik arah di stasiun Pegangsaan
+                    }
+                    
+                    const coord = lrtRoutePath2026[agent.pathIdx];
+                    mockLocations[agent.name] = { 
+                        lat: coord[0] + (Math.random() * 0.0001 - 0.00005), 
+                        lng: coord[1] + (Math.random() * 0.0001 - 0.00005), 
+                        regu: agent.regu 
+                    };
+                });
+                renderLiveUsers(mockLocations);
+                syncLiveLocations(); // Ping ke server asli jika ada
+            }, 3000); // Sinkronisasi setiap 3 detik untuk simulasi pergerakan Real-Time
+        }
+
+        // --- MAPS UI CONTROLS (SEARCH & FULLSCREEN) ---
