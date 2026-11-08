@@ -903,7 +903,6 @@
         const DEFAULT_BANNER_URL = 'https://cms.disway.id/uploads/fbb013a3f898a7d5855f9b8111afc573.jpg';
         const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbztTx2OVZk30zgtZarvIpcZbQJZnN-3ql4zlVjlfgJ7UpGZ76gWWrxv7KnAMpqEr9_J/exec';
         const GOOGLE_MAPS_API_KEY = 'AIzaSyCmgH8T5ozB4shDUnsGIWmCqxcm2h94ok8';
-        const Aplikasi_Walka = '18Zd94vnpEWNv1ScTvYZD07gwbZUVQiGb';
 
         let currentUser = JSON.parse(localStorage.getItem('walkaUser')) || null;
         
@@ -938,29 +937,108 @@
 
         function callBackend(action, data = {}) {
             return new Promise((resolve) => {
-                if (GAS_WEB_APP_URL !== '') {
+                // 1. Prioritaskan jalur native jika HTML di-host langsung di dalam Google Apps Script
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run
+                        .withSuccessHandler(res => resolve(res))
+                        .withFailureHandler(err => {
+                            console.error("GAS Error:", err);
+                            resolve({ status: 'local_fallback' });
+                        })
+                        .handleApiRequest({ action: action, data: data });
+                } 
+                // 2. Jalur API Fetch jika HTML di-host di luar (Vercel, Github Pages, hosting sendiri)
+                else if (GAS_WEB_APP_URL !== '') {
                     fetch(GAS_WEB_APP_URL, {
                         method: 'POST',
-                        redirect: 'follow',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        redirect: 'follow', // GAS akan merespons dengan 302 Redirect
+                        headers: { 
+                            'Content-Type': 'text/plain;charset=utf-8' // Trik text/plain untuk menghindari blokir CORS Preflight
+                        },
                         body: JSON.stringify({ action: action, data: data })
                     })
                     .then(response => response.json())
                     .then(res => resolve(res))
-                    .catch(() => { resolve({ status: 'local_fallback' }); });
-                } else { resolve({ status: 'local_only' }); }
+                    .catch(err => {
+                        console.error("Fetch API Error:", err);
+                        resolve({ status: 'local_fallback' });
+                    });
+                } else { 
+                    resolve({ status: 'local_only' }); 
+                }
             });
         }
 
         async function forceSync(silent = false) {
             const icon = document.getElementById('syncIcon');
             if (icon) icon.classList.add('fa-spin');
-            if (!silent) showToast('Menarik data dari server...', 'info');
-            setTimeout(() => {
-                renderAllTables();
-                if (!silent) showToast('Data tersinkronisasi!', 'success');
-                if (icon) icon.classList.remove('fa-spin');
-            }, 800);
+            
+            let loadingToast = null;
+            if (!silent) loadingToast = showToast('Menarik data real dari Google Spreadsheet...', 'loading', true);
+            
+            try {
+                // Siapkan data backup (jika Spreadsheet kosong, akan diisi dari data lokal ini)
+                const seedPayload = { 
+                    patroli: dataPatroliList, 
+                    kejadian: dataKejadianList, 
+                    pnp: dataPnpList, 
+                    petugas: dataPetugasList, 
+                    schedule: scheduleData 
+                };
+                
+                const res = await callBackend('getAllData', seedPayload);
+                
+                if (res && res.status === 'success') {
+                    if (Array.isArray(res.patroli)) dataPatroliList = res.patroli;
+                    if (Array.isArray(res.kejadian)) dataKejadianList = res.kejadian;
+                    if (Array.isArray(res.pnp)) dataPnpList = res.pnp;
+                    
+                    if (Array.isArray(res.petugas) && res.petugas.length > 0) {
+                        dataPetugasList = res.petugas;
+                        // Perbarui data Profil berjalan jika ada perubahan dari spreadsheet
+                        if (currentUser) {
+                            const updatedMe = dataPetugasList.find(p =>
+                                (p.noId && p.noId === currentUser.id) ||
+                                (p.nama && p.nama.toLowerCase() === currentUser.name.toLowerCase())
+                            );
+                            if (updatedMe) {
+                                currentUser.name = updatedMe.nama;
+                                currentUser.id = updatedMe.noId;
+                                currentUser.regu = updatedMe.regu || 'Regu 1';
+                                currentUser.jabatan = updatedMe.jabatan;
+                                currentUser.photo = updatedMe.foto;
+                                currentUser.banner = updatedMe.banner || DEFAULT_BANNER_URL;
+                                localStorage.setItem('walkaUser', JSON.stringify(currentUser));
+                                updateProfileUI();
+                            }
+                        }
+                    }
+                    if (res.schedule && Object.keys(res.schedule).length > 0) {
+                        scheduleData = Object.assign(scheduleData, res.schedule);
+                        renderCalendar();
+                    }
+                    
+                    saveRealDataCache();
+                    renderAllTables();
+                    
+                    if (!silent) {
+                        loadingToast.remove();
+                        showToast('Data berhasil disinkronisasi dengan Spreadsheet!', 'success');
+                    }
+                } else {
+                    if (!silent) {
+                        loadingToast.remove();
+                        showToast('Menggunakan data memori lokal.', 'info');
+                    }
+                }
+            } catch (e) {
+                if (!silent) {
+                    loadingToast.remove();
+                    showToast('Gagal terhubung ke server. Mode Offline aktif.', 'error');
+                }
+            } finally {
+                setTimeout(() => { if (icon) icon.classList.remove('fa-spin'); }, 600);
+            }
         }
 
         // ---------------- DATA & STATE ----------------
